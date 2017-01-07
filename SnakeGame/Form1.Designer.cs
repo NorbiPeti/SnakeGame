@@ -34,6 +34,7 @@
             this.newSingleplayerGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newMultiplayerGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.joinMultiplayerGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripTextBox();
             this.scoreLabel = new System.Windows.Forms.Label();
             this.livesLabel = new System.Windows.Forms.Label();
             this.DialogPanel = new System.Windows.Forms.Panel();
@@ -56,10 +57,11 @@
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.gameToolStripMenuItem});
+            this.gameToolStripMenuItem,
+            this.toolStripTextBox1});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(624, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(624, 27);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -70,7 +72,7 @@
             this.newMultiplayerGameToolStripMenuItem,
             this.joinMultiplayerGameToolStripMenuItem});
             this.gameToolStripMenuItem.Name = "gameToolStripMenuItem";
-            this.gameToolStripMenuItem.Size = new System.Drawing.Size(50, 20);
+            this.gameToolStripMenuItem.Size = new System.Drawing.Size(50, 23);
             this.gameToolStripMenuItem.Text = "Game";
             // 
             // newSingleplayerGameToolStripMenuItem
@@ -79,7 +81,7 @@
             this.newSingleplayerGameToolStripMenuItem.ForeColor = System.Drawing.Color.White;
             this.newSingleplayerGameToolStripMenuItem.Name = "newSingleplayerGameToolStripMenuItem";
             this.newSingleplayerGameToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.newSingleplayerGameToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            this.newSingleplayerGameToolStripMenuItem.Size = new System.Drawing.Size(269, 22);
             this.newSingleplayerGameToolStripMenuItem.Text = "New singleplayer game";
             this.newSingleplayerGameToolStripMenuItem.Click += new System.EventHandler(this.newSingleplayerGameToolStripMenuItem_Click);
             // 
@@ -92,6 +94,7 @@
             | System.Windows.Forms.Keys.N)));
             this.newMultiplayerGameToolStripMenuItem.Size = new System.Drawing.Size(269, 22);
             this.newMultiplayerGameToolStripMenuItem.Text = "New multiplayer game";
+            this.newMultiplayerGameToolStripMenuItem.Click += new System.EventHandler(this.newMultiplayerGameToolStripMenuItem_Click);
             // 
             // joinMultiplayerGameToolStripMenuItem
             // 
@@ -103,6 +106,16 @@
             | System.Windows.Forms.Keys.N)));
             this.joinMultiplayerGameToolStripMenuItem.Size = new System.Drawing.Size(269, 22);
             this.joinMultiplayerGameToolStripMenuItem.Text = "Join multiplayer game";
+            this.joinMultiplayerGameToolStripMenuItem.Click += new System.EventHandler(this.joinMultiplayerGameToolStripMenuItem_Click);
+            // 
+            // toolStripTextBox1
+            // 
+            this.toolStripTextBox1.BackColor = System.Drawing.Color.Black;
+            this.toolStripTextBox1.ForeColor = System.Drawing.Color.White;
+            this.toolStripTextBox1.Name = "toolStripTextBox1";
+            this.toolStripTextBox1.Size = new System.Drawing.Size(100, 23);
+            this.toolStripTextBox1.Text = "UserName";
+            this.toolStripTextBox1.TextChanged += new System.EventHandler(this.toolStripTextBox1_TextChanged);
             // 
             // scoreLabel
             // 
@@ -152,6 +165,7 @@
             this.Deactivate += new System.EventHandler(this.Form1_Deactivate);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
+            this.Resize += new System.EventHandler(this.Form1_Resize);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -170,6 +184,7 @@
         private System.Windows.Forms.Label scoreLabel;
         private System.Windows.Forms.Label livesLabel;
         private System.Windows.Forms.Panel DialogPanel;
+        private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
     }
 }
 

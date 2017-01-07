@@ -4,9 +4,11 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WPFInput = System.Windows.Input;
 
 namespace SnakeGame
 {
@@ -24,12 +26,16 @@ namespace SnakeGame
             }
             set
             {
-                if (value && !timerenabled) //Only start if not running already
+                if (!MSGBox.Shown)
                 {
-                    Timer.Start();
-                    SpeedTimer.Start();
+                    if (value && !timerenabled) //Only start if not running already
+                    {
+                        Timer.Start();
+                        SpeedTimer.Start();
+                    }
+                    timerenabled = value;
+                    Instance.toolStripTextBox1.Enabled = !value;
                 }
-                timerenabled = value;
             }
         }
         public Form1()
@@ -48,6 +54,7 @@ namespace SnakeGame
             Game.LivesLabel = livesLabel;
             Game.DialogPanel = DialogPanel;
             Instance = this;
+            toolStripTextBox1.Text = "Player";
             Timer = new Timer();
             Timer.Interval = Game.UpdateTime;
             Timer.Tick += delegate
@@ -81,8 +88,10 @@ namespace SnakeGame
             GameRenderer.Render();
         }
 
+        private static bool playerpaused = false;
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
+            //if (e.KeyCode == Keys.Down && WPFInput.Keyboard.IsKeyDown(WPFInput.Key.Down))
             if (e.KeyCode == Keys.Down)
                 Game.MoveDirection = Direction.Down;
             else if (e.KeyCode == Keys.Up)
@@ -93,9 +102,21 @@ namespace SnakeGame
                 Game.MoveDirection = Direction.Right;
             else if (e.KeyCode == Keys.Enter)
             {
-                MSGBox.CloseMSGBox();
+                //MSGBox.CloseMSGBox();
+                MSGBox.OnCloseEvent(sender, e);
             }
-            Game.Refresh();
+            else if (e.KeyCode == Keys.P || e.KeyCode == Keys.Pause)
+            {
+                Game.Paused = !Game.Paused;
+                if (Game.Paused)
+                    playerpaused = true;
+                else
+                    playerpaused = false;
+            }
+            else
+                return;
+            if (!Game.Paused)
+                Game.Refresh();
         }
 
         private void newSingleplayerGameToolStripMenuItem_Click(object sender, EventArgs e)
@@ -115,6 +136,55 @@ namespace SnakeGame
         {
             formdeactivated = !Game.Paused;
             Game.Paused = true;
+        }
+
+        private void newMultiplayerGameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Game.Start(GameStartMode.MultiPlayer);
+        }
+
+        private void joinMultiplayerGameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Game.Start(GameStartMode.Connect);
+        }
+
+        private void toolStripTextBox1_TextChanged(object sender, EventArgs e)
+        {
+            Game.UserName = toolStripTextBox1.Text;
+        }
+
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            
+            GameRenderer.Render();
+        }
+    }
+    public static class Ext
+    {
+        public static void ClearEventInvocations(this object obj, string eventName)
+        {
+            var fi = obj.GetType().GetEventField(eventName);
+            if (fi == null) return;
+            fi.SetValue(obj, null);
+        }
+
+        private static FieldInfo GetEventField(this Type type, string eventName)
+        {
+            FieldInfo field = null;
+            while (type != null)
+            {
+                /* Find events defined as field */
+                field = type.GetField(eventName, BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic);
+                if (field != null && (field.FieldType == typeof(MulticastDelegate) || field.FieldType.IsSubclassOf(typeof(MulticastDelegate))))
+                    break;
+
+                /* Find events defined as property { add; remove; } */
+                field = type.GetField("EVENT_" + eventName.ToUpper(), BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic);
+                if (field != null)
+                    break;
+                type = type.BaseType;
+            }
+            return field;
         }
     }
 }

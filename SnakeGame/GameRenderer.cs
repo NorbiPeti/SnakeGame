@@ -11,9 +11,19 @@ namespace SnakeGame
     public static class GameRenderer
     {
         public static Panel Panel;
+        //private static Timer timer = new Timer();
         public static void Render()
         {
             //foreach(var coord in Game.GameField)
+            /*if (timer.Enabled)
+                return;
+            else
+            {
+                timer.Interval = 1;
+                timer.ClearEventInvocations("Tick");
+                timer.Tick += delegate
+                {
+                    timer.Stop();*/
             for (int i = 0; i < Game.GameField.GetLength(0); i++)
             {
                 for (int j = 0; j < Game.GameField.GetLength(1); j++)
@@ -25,13 +35,19 @@ namespace SnakeGame
                     else if (Game.GameField[i, j].Type == SquareType.Wall)
                         RenderSquare(new Point { X = i, Y = j }, Color.Red);
                     else if (Game.GameField[i, j].Type == SquareType.Player)
-                        RenderSquare(new Point { X = i, Y = j }, Color.Green);
+                        if (Network.ConnectedMatch == null)
+                            RenderSquare(new Point { X = i, Y = j }, Color.Green);
+                        else
+                            RenderSquare(new Point { X = i, Y = j }, Network.ConnectedMatch.GetPlayerByID(Game.GameField[i, j].PlayerID).Color);
                     else if (Game.GameField[i, j].Type == SquareType.Point)
                         RenderSquare(new Point { X = i, Y = j }, Color.Blue);
                     else
                         RenderSquare(new Point { X = i, Y = j }, Color.Gray);
                 }
             }
+            /*    };
+                timer.Start();
+            }*/
         }
         private static void RenderSquare(Point coord, Color color)
         {

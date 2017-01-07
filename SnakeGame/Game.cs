@@ -26,6 +26,7 @@ namespace SnakeGame
         public static Label ScoreLabel;
         public static Label LivesLabel;
         public static Panel DialogPanel;
+        public static string UserName;
         private static int score;
         public static int Score
         {
@@ -72,20 +73,68 @@ namespace SnakeGame
             switch(mode)
             {
                 case GameStartMode.SinglePlayer:
-                    MSGBox.ShowMSGBox("New singleplayer game", "Size (X Y):", MSGBoxType.SizeInput, new EventHandler<int>(delegate(object s, int input)
+                    MSGBox.ShowMSGBox("New singleplayer game", "Size:", MSGBoxType.SizeInput, new EventHandler<string>(delegate(object s, string inp)
                     {
                         //string[] strs=input.Split(' ');
                         //int x, y;
                         //if (strs.Length == 2 && int.TryParse(strs[0], out x) && int.TryParse(strs[1], out y))
+                        int input = int.Parse(inp);
                         if (input > 5)
                         {
                             //GameSize = new Point(x, y);
                             GameRenderer.Panel.CreateGraphics().FillRectangle(new SolidBrush(Color.Black), new Rectangle(new Point(), GameRenderer.Panel.Size));
-                            int xy=GameRenderer.Panel.Size.Width/input;
+                            int xy = GameRenderer.Panel.Size.Width / input;
                             GameSize = new Point(xy, xy);
                             Game.Reset();
                             Form1.TimerEnabled = true;
                         }
+                        else
+                            Game.Paused = true;
+                    }));
+                    break;
+                case GameStartMode.MultiPlayer:
+                    if (Game.UserName == "Player")
+                    {
+                        MSGBox.ShowMSGBox("Please change your username from default.", "", MSGBoxType.Text);
+                        break;
+                    }
+                    MSGBox.ShowMSGBox("New multiplayer game", "Name:\nMax. players:", MSGBoxType.MultipleInput, new EventHandler<string>(delegate(object s, string input)
+                    {
+                        string[] strs = input.Split('\n');
+                        int num = 0;
+                        if (int.TryParse(strs[1], out num))
+                        {
+                            var match = new NetMatch { Name = strs[0], MaxPlayers = num, OwnerIP = Network.GetIPs() };
+                            Network.CreateGame(match);
+                            Game.Paused = false;
+                        }
+                        else
+                            Game.Paused = true;
+                    }));
+                    break;
+                case GameStartMode.Connect:
+                    if (Game.UserName == "Player")
+                    {
+                        MSGBox.ShowMSGBox("Please change your username from default.", "", MSGBoxType.Text);
+                        break;
+                    }
+                    Network.DownloadGameList();
+                    string matches = "";
+                    for (int i = 0; i < Network.Matches.Count; i++)
+                    {
+                        matches += Network.Matches[i].Name + "    " + Network.Matches[i].Players.Count + "/" + Network.Matches[i].MaxPlayers + "    " + Network.Matches[i].OwnerName + "\n";
+                    }
+                    MSGBox.ShowMSGBox("Connect to game", matches, MSGBoxType.List, new EventHandler<string>(delegate(object s, string input)
+                    {
+                        //Network.Connect(Network.Matches[int.Parse(input)]);
+                        int num = 0;
+                        if (int.TryParse(input, out num) && num != -1)
+                        {
+                            Network.Connect(Network.Matches[num]);
+                            Game.Paused = false;
+                        }
+                        else
+                            Game.Paused = true;
                     }));
                     break;
                 default:
@@ -101,6 +150,7 @@ namespace SnakeGame
             //GameField = new List<SqCoord>(GameSize.X * GameSize.Y);
             //GameField = new int[GameSize.X, GameSize.Y];
             GameSize = new Point { X = size.Width / 20, Y = size.Height / 20 };
+            UserName = "Player";
             Game.Reset();
             //GameField.Single(entry => entry.X == PlayerPos.X && entry.Y == PlayerPos.Y).Tick;
             /*for (int i = 0; i < GameField.Count; i++)
@@ -198,7 +248,7 @@ namespace SnakeGame
             if (Game.GameField[nextcoord.X, nextcoord.Y].Tick != 0 && Game.GameField[nextcoord.X, nextcoord.Y].Type != SquareType.Point)
             {
                 Lives--;
-                if (Lives == 0)
+                if (Lives <= 0)
                     Stop();
                 else
                     Reset(false);
@@ -219,8 +269,10 @@ namespace SnakeGame
                 GameField[nextcoord.X, nextcoord.Y].Tick = Length;
                 GameField[nextcoord.X, nextcoord.Y].Type = SquareType.Player;
                 PlayerPos = new Point { X = nextcoord.X, Y = nextcoord.Y };
+                /*if (Score > 0)
+                    Score--;*/
                 if (Score > 0)
-                    Score--;
+                    Score -= new Random().Next(1, 20);
 /*                        }
                     }
                 }*/
@@ -251,7 +303,8 @@ namespace SnakeGame
             //Form1.Timer.Stop();
             //Form1.TimerEnabled = false;
             //MessageBox.Show("Game over!");
-            MSGBox.ShowMSGBox("Game over!", "", MSGBoxType.Text, pauseafter: true);
+            MSGBox.ShowMSGBox("Game over!", "", MSGBoxType.Text);
+            Game.Paused = true;
         }
     }
     public enum GameStartMode
