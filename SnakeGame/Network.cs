@@ -12,11 +12,13 @@ using Newtonsoft.Json.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Drawing;
+using Newtonsoft.Json;
 
 namespace SnakeGame
 {
-    public static class Network
+    public static partial class Network
     {
+        public const int Port = 12885;
         public static void SyncUpdate(NetUpdateType updatetype) //If we are a server, forward every valid data we get
         {
 
@@ -53,7 +55,7 @@ namespace SnakeGame
                             MessageBox.Show("Error! The received text is in wrong format.");
                         x++;
                         for (int i = x; i < x + players; i++)
-                            match.Players.Add(new Player(responses[i], match.NextID++));
+                            match.Players.Add(new Player(responses[i]));
                         x += players;
                         //match.OwnerIP = IPAddress.Parse(responses[x]);
                         match.OwnerIP = responses[x].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(entry => IPAddress.Parse(entry)).ToArray();
@@ -73,6 +75,7 @@ namespace SnakeGame
                 values["client"] = Game.Player.Name;
                 values["name"] = match.Name;
                 values["maxplayers"] = match.MaxPlayers.ToString();
+                values["action"] = "create";
 
                 /*IPAddress[] ip = GetIPs();
                 if (ip == null)
@@ -87,30 +90,58 @@ namespace SnakeGame
                     MessageBox.Show("Error!\n" + responseString);
                 else
                 {
-                    Join(match);
+                    Join(match, true);
                 }
             }
         }
         public static void Connect(NetMatch match)
         {
-            MessageBox.Show("Connect to game: " + match.Name + " (" + match.MaxPlayers + " players)");
-            Join(match);
+            //MessageBox.Show("Connect to game: " + match.Name + " (" + match.MaxPlayers + " players)");
+            Join(match, false);
         }
-        public static void Join(NetMatch match)
+        public static void Join(NetMatch match, bool server)
         {
             if (ConnectedMatch != null)
                 Leave();
             ConnectedMatch = match;
-            StartListening();
+            StartListening(server);
         }
+        private static event EventHandler StopEventPerPlayer;
         public static void Leave()
         {
             if (ConnectedMatch == null)
                 return;
+            if (ConnectedMatch.OwnerName == Game.Player.Name)
+            {
+                using (var client = new WebClient())
+                {
+                    var values = new NameValueCollection();
+                    values["client"] = Game.Player.Name;
+                    values["name"] = ConnectedMatch.Name;
+                    values["maxplayers"] = ConnectedMatch.MaxPlayers.ToString();
+                    values["action"] = "remove";
+
+                    /*IPAddress[] ip = GetIPs();
+                    if (ip == null)
+                        return;*/
+                    values["ip"] = "";
+                    Array.ForEach(ConnectedMatch.OwnerIP, new Action<IPAddress>(entry => values["ip"] += entry.ToString() + ";"));
+
+                    var response = client.UploadValues("http://snakegame.16mb.com", values);
+
+                    var responseString = Encoding.Default.GetString(response);
+                    if (responseString != "OK")
+                        MessageBox.Show("Error!\n" + responseString);
+                }
+            }
+            Listener.Stop();
             ReceiverThread.Abort();
+            if (StopEventPerPlayer != null)
+                StopEventPerPlayer(null, null);
             foreach (Thread t in PlayerThreads)
                 t.Abort();
             PlayerThreads.Clear();
+            ConnectedMatch = null;
         }
         public static IPAddress[] GetIPs()
         {
@@ -127,100 +158,17 @@ namespace SnakeGame
         }
         public static Thread ReceiverThread;
         public static List<Thread> PlayerThreads = new List<Thread>();
-        public static void StartListening()
+        public static void StartListening(bool server)
         {
+            /*if (ReceiverThread == null)
+                (ReceiverThread = new Thread(new ThreadStart(server ? ServerListenerThreadRun : ClientListenerThreadRun))).Start();*/
             if (ReceiverThread == null)
-                (ReceiverThread = new Thread(new ThreadStart(ThreadRun))).Start();
-        }
-        private static void ThreadRun()
-        {
-            MessageBox.Show("Listener thread started.");
-            var listener = new TcpListener(IPAddress.IPv6Any, 12885);
-            listener.Start();
-            while(true)
             {
-                TcpClient client = listener.AcceptTcpClient();
-                Thread t = new Thread(new ParameterizedThreadStart(ThreadPerPlayer));
-                PlayerThreads.Add(t);
-                t.Start(client);
+                if (server)
+                    (ReceiverThread = new Thread(new ThreadStart(ServerListenerThreadRun))).Start();
+                else
+                    (ReceiverThread = new Thread(new ThreadStart(ClientListenerThreadRun))).Start();
             }
-        }
-        private static void ThreadPerPlayer(object c)
-        {
-            TcpClient client = c as TcpClient;
-            NetworkStream ns = client.GetStream();
-            BinaryReader br = new BinaryReader(ns);
-            int is52=br.ReadInt32();
-            if(is52!=52)
-            {
-                client.Close();
-                return;
-            }
-            string playername = br.ReadString();
-            Player player = new Player(playername, ConnectedMatch.NextID++); //Login==Connect
-            player.Client = client;
-            ConnectedMatch.Players.Add(player);
-            while (true)
-            {
-                NetUpdateType updatetype = (NetUpdateType)br.ReadInt32();
-                switch (updatetype)
-                {
-                    case NetUpdateType.Name:
-                        string newname = br.ReadString();
-                        player.Name = newname;
-                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
-                        { //ForwardMessage prepares each send and then here the only thing to do is to send the extra data
-                            bw.Write(newname);
-                        }
-                        break;
-                    case NetUpdateType.Color:
-                        Color color = Color.FromArgb(br.ReadInt32());
-                        player.Color = color;
-                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
-                        {
-                            bw.Write(color.ToArgb());
-                        }
-                        break;
-                    case NetUpdateType.Move:
-                        Direction direction = (Direction)br.ReadInt32();
-                        Game.MovePlayer(player, direction);
-                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
-                        {
-                            bw.Write((int)direction);
-                        }
-                        break;
-                    /*case NetUpdateType.Login:
-                        ConnectedMatch.Players.Add(new Player(playername, ConnectedMatch.NextID));
-                        break;*/
-                    case NetUpdateType.Leave:
-                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
-                        {
-                        }
-                        Network.ConnectedMatch.Players.RemoveAll(entry => entry.Name == playername);
-                        client.Close();
-                        break;
-                }
-            }
-        }
-        private static IEnumerable<BinaryWriter> ForwardMessage(Player player, string playername, int updatetype)
-        {
-            if (ConnectedMatch.OwnerName == Game.Player.Name)
-            {
-                //foreach (Player p in ConnectedMatch.Players)
-                Player p;
-                while (ConnectedMatch.Players.GetEnumerator().MoveNext())
-                {
-                    p = ConnectedMatch.Players.GetEnumerator().Current;
-                    if (p == player)
-                        continue;
-                    var bw = new BinaryWriter(p.Client.GetStream());
-                    bw.Write(52);
-                    bw.Write(playername);
-                    bw.Write(updatetype);
-                    yield return bw;
-                }
-            }
-            yield break;
         }
     }
     public enum NetUpdateType

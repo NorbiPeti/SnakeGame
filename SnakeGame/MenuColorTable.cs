@@ -24,11 +24,24 @@ namespace SnakeGame
                 return Color.Black;
             }
         }
+        private Color prevcolor = Color.Blue;
+        private bool blue = false;
         public override Color MenuStripGradientEnd
         {
             get
             {
-                return Color.Blue;
+                //return Color.Blue;
+                //return Game.GetRandomColor();
+                Color color = prevcolor;
+                if (color.G - 10 <= 0/* || color.B + 10 >= byte.MaxValue*/)
+                    blue = false;
+                else if (/*color.B - 10 <= 0 || */color.G + 10 >= byte.MaxValue)
+                    blue = true;
+                if (blue)
+                    prevcolor = Color.FromArgb(color.R, color.G - 10, color.B);
+                else
+                    prevcolor = Color.FromArgb(color.R, color.G + 10, color.B);
+                return color;
             }
         }
         public override Color MenuBorder

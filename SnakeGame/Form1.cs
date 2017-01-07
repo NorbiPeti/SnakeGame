@@ -103,7 +103,8 @@ namespace SnakeGame
             else if (e.KeyCode == Keys.Enter)
             {
                 //MSGBox.CloseMSGBox();
-                MSGBox.OnCloseEvent(sender, e);
+                if (MSGBox.OnCloseEvent != null)
+                    MSGBox.OnCloseEvent(sender, e);
             }
             else if (e.KeyCode == Keys.P || e.KeyCode == Keys.Pause)
             {
@@ -165,6 +166,11 @@ namespace SnakeGame
             gr.FillRectangle(new SolidBrush(Color.Black), new Rectangle(new Point(0, 0), panel1.Size));
             GameRenderer.Render();
         }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Network.Leave(); //Stop threads and such
+        }
     }
     public static class Ext
     {
@@ -192,6 +198,14 @@ namespace SnakeGame
                 type = type.BaseType;
             }
             return field;
+        }
+
+        public static TResult Combine<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult, TResult> func)
+        {
+            TResult combiner = default(TResult);
+            foreach (var entry in source)
+                combiner = func(entry, combiner);
+            return combiner;
         }
     }
 }

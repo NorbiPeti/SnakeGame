@@ -76,7 +76,11 @@ namespace SnakeGame
                     break;
                 case MSGBoxType.List:
                     Game.DialogPanel.Size = new Size(200, 200);
-                    string[] strs = inputtext.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] strs;
+                    if (inputtext != null) //Combine method can produce null strings
+                        strs = inputtext.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    else
+                        strs = new string[0];
                     //Game.DialogPanel.Controls.Add(new Label { Text = strs[0], Location = new Point(10, 60), Size = new Size(100, 20) });
                     ListBox listbox = new ListBox { Location = new Point(10, 60), Size = new Size(190, 100) };
                     for (int i = 0; i < strs.Length; i++)

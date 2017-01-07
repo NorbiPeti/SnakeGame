@@ -61,7 +61,8 @@ namespace SnakeGame
         /// </summary>
         public int Tick { get; set; }
         public SquareType Type { get; set; }
-        public int PlayerID { get; set; }
+        //public int PlayerID { get; set; }
+        public string PlayerName { get; set; }
     }
     /// <summary>
     /// Only consider if Tick>0

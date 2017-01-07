@@ -11,11 +11,6 @@ namespace SnakeGame
 {
     public static class Game
     {
-        /// <summary>
-        /// Plans:
-        /// Replace MessageBox with own GUI; Add GUI to get GameSize...
-        /// Maybe select region to set one square's size and/or visualize changes when user stops interaction
-        /// </summary>
         public static Point GameSize;
         //public static List<SqCoord> GameField;
         public static SqCoord[,] GameField;
@@ -27,7 +22,7 @@ namespace SnakeGame
         public static Label LivesLabel;
         public static Panel DialogPanel;
         //public static string UserName;
-        public static Player Player = new Player("Player", 0, true);
+        public static Player Player = new Player("Player", true);
         private static int score;
         public static int Score
         {
@@ -105,8 +100,9 @@ namespace SnakeGame
                         int num = 0;
                         if (int.TryParse(strs[1], out num))
                         {
-                            var match = new NetMatch { Name = strs[0], MaxPlayers = num, OwnerIP = Network.GetIPs() };
+                            var match = new NetMatch { Name = strs[0], MaxPlayers = num, OwnerIP = Network.GetIPs(), OwnerName = Player.Name };
                             match.Players.Add(Game.Player);
+                            Game.Reset();
                             Network.CreateGame(match);
                             Game.Paused = false;
                         }
@@ -121,17 +117,19 @@ namespace SnakeGame
                         break;
                     }
                     Network.DownloadGameList();
-                    string matches = "";
+                    /*string matches = "";
                     for (int i = 0; i < Network.Matches.Count; i++)
                     {
                         matches += Network.Matches[i].Name + "    " + Network.Matches[i].Players.Count + "/" + Network.Matches[i].MaxPlayers + "    " + Network.Matches[i].OwnerName + "\n";
-                    }
+                    }*/
+                    string matches = Network.Matches.Combine<NetMatch, string>((match, combiner) => combiner += match.Name + "    " + match.Players.Count + "/" + match.MaxPlayers + "    " + match.OwnerName + "\n");
                     MSGBox.ShowMSGBox("Connect to game", matches, MSGBoxType.List, new EventHandler<string>(delegate(object s, string input)
                     {
                         //Network.Connect(Network.Matches[int.Parse(input)]);
                         int num = 0;
                         if (int.TryParse(input, out num) && num != -1)
                         {
+                            Game.Reset();
                             Network.Connect(Network.Matches[num]);
                             Game.Paused = false;
                         }
@@ -168,6 +166,8 @@ namespace SnakeGame
 
         public static void Reset(bool fullreset)
         {
+            if (fullreset)
+                Network.Leave();
             Size size = GameRenderer.Panel.Size;
             //GameSize = new Point { X = size.Width / 20, Y = size.Height / 20 };
             GameField = new SqCoord[GameSize.X, GameSize.Y];
@@ -198,6 +198,7 @@ namespace SnakeGame
                     {
                         GameField[i, j].Type = SquareType.Player;
                         GameField[i, j].Tick = Length;
+                        GameField[i, j].PlayerName = Player.Name;
                     }
                 }
             }
@@ -224,8 +225,13 @@ namespace SnakeGame
                         GameField[i, j].Tick--;
                 }
             }
-            Point nextcoord = MovePlayer(Player, MoveDirection);
+            Point nextcoord = MovePlayerPre(Player, MoveDirection);
             Network.SyncUpdate(NetUpdateType.Move);
+            /*if (nextcoord.X >= GameField.GetLength(0) || nextcoord.Y >= GameField.GetLength(1))
+            {
+                MessageBox.Show("Error!");
+                return;
+            }*/
             if (Game.GameField[nextcoord.X, nextcoord.Y].Tick != 0 && Game.GameField[nextcoord.X, nextcoord.Y].Type != SquareType.Point)
             {
                 Lives--;
@@ -243,8 +249,9 @@ namespace SnakeGame
                 }
                 if (Score > 0)
                     Score -= new Random().Next(1, 20);
-                GameRenderer.Render();
+                MovePlayerPost(Player, nextcoord);
             }
+            GameRenderer.Render();
         }
 
         public static void AddPoint()
@@ -274,7 +281,7 @@ namespace SnakeGame
             Game.Paused = true;
         }
 
-        public static Point MovePlayer(Player player, Direction direction)
+        public static Point MovePlayerPre(Player player, Direction direction)
         {
             Point nextcoord;
             switch (direction)
@@ -295,10 +302,31 @@ namespace SnakeGame
                     nextcoord = player.Position;
                     break;
             }
-            GameField[nextcoord.X, nextcoord.Y].Tick = Length;
-            GameField[nextcoord.X, nextcoord.Y].Type = SquareType.Player;
-            player.Position = new Point { X = nextcoord.X, Y = nextcoord.Y };
+            //GameField[nextcoord.X, nextcoord.Y].Tick = Length;
+            //GameField[nextcoord.X, nextcoord.Y].Type = SquareType.Player;
+            //player.Position = new Point { X = nextcoord.X, Y = nextcoord.Y };
             return nextcoord;
+        }
+        public static void MovePlayerPost(Player player, Point point)
+        {
+            GameField[point.X, point.Y].Tick = Length;
+            GameField[point.X, point.Y].Type = SquareType.Player;
+            GameField[point.X, point.Y].PlayerName = player.Name;
+            player.Position = point;
+        }
+        public static Color GetRandomColor()
+        {
+            var values = Enum.GetValues(typeof(KnownColor));
+            KnownColor[] colors = new KnownColor[values.Length];
+            values.CopyTo(colors, 0);
+            values = null;
+            List<KnownColor> colorlist = new List<KnownColor>(colors);
+            colorlist.Remove(KnownColor.Black);
+            colorlist.Remove(KnownColor.Blue);
+            colorlist.Remove(KnownColor.Red);
+            colorlist.RemoveAll(entry => Color.FromKnownColor(entry).IsSystemColor);
+            colors = colorlist.ToArray();
+            return Color.FromKnownColor(colors[new Random().Next(colors.Length)]);
         }
     }
     public enum GameStartMode

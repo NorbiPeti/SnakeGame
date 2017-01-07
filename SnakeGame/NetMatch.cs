@@ -35,17 +35,18 @@ namespace SnakeGame
             }
         }
         public IPAddress[] OwnerIP;
-        public Player GetPlayerByID(int id)
+        public Player GetPlayerByName(string name)
         {
             try
             {
-                return Players.Single(entry => entry.ID == id);
+                //return Players.Single(entry => entry.ID == id);
+                return Players.Single(entry => entry.Name == name);
             }
             catch
             {
                 return null;
             }
         }
-        public int NextID = 0;
+        //public int NextID = 0;
     }
 }

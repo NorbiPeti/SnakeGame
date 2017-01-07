@@ -41,21 +41,17 @@ namespace SnakeGame
         }
         public Point Position;
         public TcpClient Client;
-        public readonly int ID;
+        //public readonly int ID;
         public readonly bool Own;
-        public Player(string name, int id, bool own = false)
+        public Player(string name, bool own = false, Color color = default(Color))
         {
             Name = name;
-            var values = Enum.GetValues(typeof(KnownColor));
-            KnownColor[] colors = new KnownColor[values.Length];
-            values.CopyTo(colors, 0);
-            values = null;
-            List<KnownColor> colorlist = new List<KnownColor>(colors);
-            colorlist.Remove(KnownColor.Black);
-            colorlist.Remove(KnownColor.Blue);
-            colorlist.Remove(KnownColor.Red);
-            colors = colorlist.ToArray();
-            Color = Color.FromKnownColor(colors[new Random().Next(colors.Length)]);
+            if (color == default(Color))
+            {
+                Color = Game.GetRandomColor();
+            }
+            else
+                Color = color;
             //ID = NextID;
             //NextID++;
             Own = own;

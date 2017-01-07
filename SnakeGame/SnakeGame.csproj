@@ -72,6 +72,7 @@
     <Compile Include="GameRenderer.cs" />
     <Compile Include="MenuColorTable.cs" />
     <Compile Include="MSGBox.cs" />
+    <Compile Include="Network.Client.cs" />
     <Compile Include="Network.cs" />
     <Compile Include="NetMatch.cs" />
     <Compile Include="Player.cs" />
@@ -91,6 +92,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <Compile Include="Network.Server.cs" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
