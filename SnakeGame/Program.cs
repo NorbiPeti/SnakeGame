@@ -18,5 +18,10 @@ namespace SnakeGame
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
         }
+
+        public static void HandleException(Exception e)
+        {
+            MessageBox.Show("Error!\n" + e.Message);
+        }
     }
 }

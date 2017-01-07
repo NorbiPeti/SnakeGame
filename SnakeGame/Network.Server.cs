@@ -57,53 +57,64 @@ namespace SnakeGame
             }
             //Read and write inital data
             //string playername = br.ReadString();
-            JObject readdata = JObject.Parse(br.ReadString());
-            string playername = readdata["PlayerName"].ToString();
-            /*int initialcolor;
-            if (!int.TryParse(readdata["Color"].ToString(), out initialcolor))
+            try
             {
-                client.Close();
-                return;
-            }*/
-            Player player = new Player(playername, color: Color.FromArgb((int)readdata["Color"])); //Login==Connect
-            player.Client = client;
-            ConnectedMatch.Players.Add(player);
-            BinaryWriter bwp = new BinaryWriter(ns);
-            var senddata = new JObject();
-            senddata["Length"] = Game.Length;
-            senddata["GameSize"] = new JObject();
-            senddata["GameSize"]["X"] = Game.GameSize.X;
-            senddata["GameSize"]["Y"] = Game.GameSize.Y;
-            senddata["GameField"] = new JObject();
-            for (int i = 0; i < Game.GameSize.X; i++)
-            {
-                senddata["GameField"][i + ""] = new JObject();
-                for (int j = 0; j < Game.GameSize.Y; j++)
+                JObject readdata = JObject.Parse(br.ReadString());
+                string playername = readdata["PlayerName"].ToString();
+                /*int initialcolor;
+                if (!int.TryParse(readdata["Color"].ToString(), out initialcolor))
                 {
-                    senddata["GameField"][i + ""][j + ""] = new JObject();
-                    senddata["GameField"][i + ""][j + ""]["PlayerName"] = Game.GameField[i, j].PlayerName;
-                    senddata["GameField"][i + ""][j + ""]["Tick"] = Game.GameField[i, j].Tick;
-                    senddata["GameField"][i + ""][j + ""]["Type"] = Game.GameField[i, j].Type.ToString();
+                    client.Close();
+                    return;
+                }*/
+                if (Network.ConnectedMatch.Players.SingleOrDefault(entry => entry.Name == playername) != null)
+                {
+                    client.Close();
+                    return;
+                }
+                Player joinedplayer = new Player(playername, color: Color.FromArgb((int)readdata["Color"])); //Login==Connect
+                joinedplayer.Client = client;
+                ConnectedMatch.Players.Add(joinedplayer);
+                BinaryWriter bwp = new BinaryWriter(ns);
+                var senddata = new JObject();
+                senddata["Length"] = Game.Length;
+                senddata["GameSize"] = new JObject();
+                senddata["GameSize"]["X"] = Game.GameSize.X;
+                senddata["GameSize"]["Y"] = Game.GameSize.Y;
+                senddata["GameField"] = new JObject();
+                for (int i = 0; i < Game.GameSize.X; i++)
+                {
+                    senddata["GameField"][i + ""] = new JObject();
+                    for (int j = 0; j < Game.GameSize.Y; j++)
+                    {
+                        senddata["GameField"][i + ""][j + ""] = new JObject();
+                        senddata["GameField"][i + ""][j + ""]["PlayerName"] = Game.GameField[i, j].PlayerName;
+                        senddata["GameField"][i + ""][j + ""]["Tick"] = Game.GameField[i, j].Tick;
+                        senddata["GameField"][i + ""][j + ""]["Type"] = Game.GameField[i, j].Type.ToString();
+                    }
+                }
+                senddata["Players"] = new JObject();
+                foreach (Player player in ConnectedMatch.Players)
+                {
+                    if (player.Name == joinedplayer.Name)
+                        continue;
+                    senddata["Players"][player.Name] = new JObject();
+                    senddata["Players"][player.Name]["Position"] = new JObject();
+                    senddata["Players"][player.Name]["Position"]["X"] = player.Position.X;
+                    senddata["Players"][player.Name]["Position"]["Y"] = player.Position.Y;
+                    senddata["Players"][player.Name]["Color"] = player.Color.ToArgb();
+                }
+                bwp.Write(senddata.ToString());
+                Game.Paused = false;
+                SendUpdate = true;
+                while (true)
+                {
+                    if (!ReceiveAndProcessData(joinedplayer, br))
+                        break;
                 }
             }
-            senddata["Players"] = new JObject();
-            foreach (Player joinedplayer in ConnectedMatch.Players)
+            catch
             {
-                if (joinedplayer.Name == player.Name)
-                    continue;
-                senddata["Players"][joinedplayer.Name] = new JObject();
-                senddata["Players"][joinedplayer.Name]["Position"] = new JObject();
-                senddata["Players"][joinedplayer.Name]["Position"]["X"] = joinedplayer.Position.X;
-                senddata["Players"][joinedplayer.Name]["Position"]["Y"] = joinedplayer.Position.Y;
-                senddata["Players"][joinedplayer.Name]["Color"] = joinedplayer.Color.ToArgb();
-            }
-            bwp.Write(senddata.ToString());
-            Game.Paused = false;
-            SendUpdate = true;
-            while (true)
-            {
-                if (!ReceiveAndProcessData(player, br))
-                    break;
             }
         }
         private static IEnumerable<BinaryWriter> ForwardMessage(Player player, string playername, int updatetype)
@@ -114,7 +125,7 @@ namespace SnakeGame
                 while (ConnectedMatch.Players.GetEnumerator().MoveNext())
                 {
                     p = ConnectedMatch.Players.GetEnumerator().Current;
-                    if (p == player)
+                    if (p == null || p.Name == player.Name || p.Name == Game.Player.Name)
                         continue;
                     var bw = new BinaryWriter(p.Client.GetStream());
                     bw.Write(playername);

@@ -183,6 +183,7 @@ namespace SnakeGame
                 UpdateTime = 800;
                 Length = 4;
             }
+            Network.SyncUpdate(NetUpdateType.Teleport, Player.Position);
             for (int i = 0; i < GameSize.X; i++)
             {
                 for (int j = 0; j < GameSize.Y; j++)
@@ -318,6 +319,8 @@ namespace SnakeGame
         }
         public static void MovePlayerPost(Player player, Point point)
         {
+            if (point.X >= GameSize.X || point.Y >= GameSize.Y)
+                return;
             GameField[point.X, point.Y].Tick = Length;
             GameField[point.X, point.Y].Type = SquareType.Player;
             GameField[point.X, point.Y].PlayerName = player.Name;

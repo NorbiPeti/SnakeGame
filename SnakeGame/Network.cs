@@ -21,42 +21,58 @@ namespace SnakeGame
         public const int Port = 12885;
         public static void SyncUpdate(NetUpdateType updatetype, object data)
         {
-            if (ConnectedMatch == null)
+            if (ConnectedMatch == null || !SendUpdate)
                 return;
-            BinaryWriter bw;
-            foreach (Player player in ConnectedMatch.Players)
+            try
             {
-                if (player.Name == Game.Player.Name)
-                    continue; //Don't send to ourselves
-                bool isserver = ConnectedMatch.OwnerName == Game.Player.Name;
-                if (!isserver)
+                BinaryWriter bw;
+                foreach (Player player in ConnectedMatch.Players)
                 {
-                    bw = new BinaryWriter(ConnectedMatch.GetPlayerByName(ConnectedMatch.OwnerName).Client.GetStream());
+                    if (player.Name == Game.Player.Name)
+                        continue; //Don't send to ourselves
+                    bool isserver = ConnectedMatch.OwnerName == Game.Player.Name;
+                    if (!isserver)
+                    {
+                        bw = new BinaryWriter(ConnectedMatch.GetPlayerByName(ConnectedMatch.OwnerName).Client.GetStream()); //If not server, send only to server
+                    }
+                    else
+                    {
+                        bw = new BinaryWriter(player.Client.GetStream());
+                        bw.Write(Game.Player.Name); //Otherwise write playername as listener expects
+                    }
+                    bw.Write((int)updatetype);
+                    switch (updatetype)
+                    {
+                        case NetUpdateType.Name:
+                            string newname = (string)data;
+                            bw.Write(newname);
+                            break;
+                        case NetUpdateType.Color:
+                            int color = ((Color)data).ToArgb();
+                            bw.Write(color);
+                            break;
+                        case NetUpdateType.Move:
+                            int direction = (int)data; //Converting to enum and back to int is unnecessary
+                            bw.Write(direction);
+                            break;
+                        case NetUpdateType.Leave:
+                            break;
+                        case NetUpdateType.Teleport:
+                            Point point = (Point)data;
+                            bw.Write(point.X);
+                            bw.Write(point.Y);
+                            break;
+                    }
+                    if (!isserver)
+                        break; //If not server, only send to the server
                 }
-                else
-                {
-                    bw = new BinaryWriter(player.Client.GetStream());
-                }
-                bw.Write((int)updatetype);
-                switch (updatetype)
-                {
-                    case NetUpdateType.Name:
-                        string newname = (string)data;
-                        bw.Write(newname);
-                        break;
-                    case NetUpdateType.Color:
-                        int color = ((Color)data).ToArgb();
-                        bw.Write(color);
-                        break;
-                    case NetUpdateType.Move:
-                        int direction = (int)data; //Converting to enum and back to int is unnecessary
-                        bw.Write(direction);
-                        break;
-                    case NetUpdateType.Leave:
-                        break;
-                }
-                if (!isserver)
-                    break; //If not server, only send to the server
+            }
+            catch (IOException)
+            {
+            }
+            catch (Exception e)
+            {
+                Program.HandleException(e);
             }
         }
         public static List<NetMatch> Matches = new List<NetMatch>();
@@ -100,6 +116,10 @@ namespace SnakeGame
                     }
                 }
                 catch (WebException) { }
+                catch (Exception e)
+                {
+                    Program.HandleException(e);
+                }
             }
         }
         public static void CreateGame(NetMatch match)
@@ -171,8 +191,8 @@ namespace SnakeGame
                     if (responseString != "OK")
                         MessageBox.Show("Error!\n" + responseString);
                 }
-            }
             Listener.Stop();
+            }
             ReceiverThread.Abort();
             if (StopEventPerPlayer != null)
                 StopEventPerPlayer(null, null);
@@ -251,11 +271,24 @@ namespace SnakeGame
                         Network.ConnectedMatch.Players.RemoveAll(entry => entry.Name == playername);
                         player.Client.Close();
                         break;
+                    case NetUpdateType.Teleport:
+                        player.Position = new Point(br.ReadInt32(), br.ReadInt32());
+                        Game.MovePlayerPost(player, player.Position);
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                            bw.Write(player.Position.X);
+                            bw.Write(player.Position.Y);
+                        }
+                        break;
                 }
             }
             catch (IOException)
             {
                 return false;
+            }
+            catch (Exception e)
+            {
+                Program.HandleException(e);
             }
             return true;
         }
@@ -266,6 +299,7 @@ namespace SnakeGame
         Color,
         Move,
         //Login, - Login==Connect
-        Leave
+        Leave,
+        Teleport
     }
 }

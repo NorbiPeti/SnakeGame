@@ -42,7 +42,7 @@ namespace SnakeGame
         public IPAddress[] OwnerIP;
         public Player GetPlayerByName(string name)
         {
-            try
+            /*try
             {
                 //return Players.Single(entry => entry.ID == id);
                 return Players.Single(entry => entry.Name == name);
@@ -50,7 +50,8 @@ namespace SnakeGame
             catch
             {
                 return null;
-            }
+            }*/
+            return Players.SingleOrDefault(entry => entry.Name == name);
         }
         //public int NextID = 0;
     }
