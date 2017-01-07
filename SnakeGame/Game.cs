@@ -10,11 +10,17 @@ namespace SnakeGame
 {
     public static class Game
     {
+        /// <summary>
+        /// Plans:
+        /// Replace MessageBox with own GUI; Add GUI to get GameSize...
+        /// Maybe select region to set one square's size and/or visualize changes when user stops interaction
+        /// </summary>
         public static SqCoord GameSize;
-        public static List<SqCoord> GameField;
+        //public static List<SqCoord> GameField;
+        public static int[,] GameField;
         public static SqCoord PlayerPos;
         public static int Length = 4;
-        public static int UpdateTime = 2000;
+        public static int UpdateTime = 1000;
         public static Direction MoveDirection;
 
         public static void Start(GameStartMode mode)
@@ -22,6 +28,8 @@ namespace SnakeGame
             switch(mode)
             {
                 case GameStartMode.SinglePlayer:
+                    Game.Reset();
+                    Form1.TimerEnabled = true;
                     break;
                 default:
                     throw new ArgumentException();
@@ -31,21 +39,11 @@ namespace SnakeGame
         public static void Load(Size size)
         {
             //GameSize = size;
-            GameSize = SquareCoord.PointToSqCoord(new Point(size));
-            GameField = new List<SqCoord>(GameSize.X * GameSize.Y);
-            PlayerPos = new SqCoord { X = GameSize.X / 2, Y = 1 };
-            for (int i = 0; i < GameSize.X; i++)
-            {
-                for (int j = 0; j < GameSize.Y; j++)
-                {
-                    SqCoord coord = new SqCoord { X = i, Y = j, Tick = 0 };
-                    if (i == 0 || j == 0 || i == GameSize.X - 1 || j == GameSize.Y - 1)
-                        coord.Tick = -1;
-                    else if (i == PlayerPos.X && j == PlayerPos.Y)
-                        coord.Tick = 4;
-                    GameField.Add(coord);
-                }
-            }
+            //GameSize = SquareCoord.PointToSqCoord(new Point(size));
+            //GameSize = new SqCoord { X = size.Width / 20, Y = size.Height / 20 };
+            //GameField = new List<SqCoord>(GameSize.X * GameSize.Y);
+            //GameField = new int[GameSize.X, GameSize.Y];
+            Game.Reset();
             //GameField.Single(entry => entry.X == PlayerPos.X && entry.Y == PlayerPos.Y).Tick;
             /*for (int i = 0; i < GameField.Count; i++)
             {
@@ -54,8 +52,34 @@ namespace SnakeGame
                     GameField[i].Tick = Length;
                 }
             }*/
+            //GameRenderer.Render(); - It has no effect in loading part
+        }
+
+        public static void Reset()
+        {
+            Size size = GameRenderer.Panel.Size;
+            GameSize = new SqCoord { X = size.Width / 20, Y = size.Height / 20 };
+            GameField = new int[GameSize.X, GameSize.Y];
+            PlayerPos = new SqCoord { X = GameSize.X / 2, Y = 1 };
+            for (int i = 0; i < GameSize.X; i++)
+            {
+                for (int j = 0; j < GameSize.Y; j++)
+                {
+                    /*SqCoord coord = new SqCoord { X = i, Y = j, Tick = 0 };
+                    if (i == 0 || j == 0 || i == GameSize.X - 1 || j == GameSize.Y - 1)
+                        coord.Tick = -1;
+                    else if (i == PlayerPos.X && j == PlayerPos.Y)
+                        coord.Tick = 4;
+                    GameField.Add(coord);*/
+                    if (i == 0 || j == 0 || i == GameSize.X - 1 || j == GameSize.Y - 1)
+                        GameField[i, j] = -1;
+                    else if (i == PlayerPos.X && j == PlayerPos.Y)
+                        GameField[i, j] = 4;
+                    else
+                        GameField[i, j] = 0;
+                }
+            }
             MoveDirection = Direction.Down;
-            GameRenderer.Render();
         }
 
         public static void Refresh()
@@ -63,10 +87,16 @@ namespace SnakeGame
             //Decrease any positive Ticks; if next player position is other than zero, game over
             //Otherwise set next player position and set Tick on player position to current Length
             //Console.WriteLine("Refreshing...");
-            for (int i = 0; i < GameField.Count; i++)
+            //for (int i = 0; i < GameField.Count; i++)
+            for (int i = 0; i < GameField.GetLength(0); i++)
             {
-                if (GameField[i].Tick > 0)
-                    GameField[i] = new SqCoord { X = GameField[i].X, Y = GameField[i].Y, Tick = GameField[i].Tick - 1 };
+                for (int j = 0; j < GameField.GetLength(1); j++)
+                {
+                    /*if (GameField[i].Tick > 0)
+                        GameField[i] = new SqCoord { X = GameField[i].X, Y = GameField[i].Y, Tick = GameField[i].Tick - 1 };*/
+                    if (GameField[i, j] > 0)
+                        GameField[i, j]--;
+                }
             }
             SqCoord nextcoord;
             switch (MoveDirection)
@@ -87,27 +117,35 @@ namespace SnakeGame
                     nextcoord = PlayerPos;
                     break;
             }
-            if (Game.GetCoord(nextcoord).Tick != 0)
+            //if (Game.GetCoord(nextcoord).Tick != 0)
+            if (Game.GameField[nextcoord.X, nextcoord.Y] != 0)
                 Stop();
-            for (int i = 0; i < GameField.Count; i++)
+            else
             {
-                if (GameField[i].X == nextcoord.X && GameField[i].Y == nextcoord.Y)
+                for (int i = 0; i < GameField.GetLength(0); i++)
                 {
-                    GameField[i] = new SqCoord { X = nextcoord.X, Y = nextcoord.Y, Tick = Length };
-                    PlayerPos = GameField[i];
+                    for (int j = 0; j < GameField.GetLength(1); j++)
+                    {
+                        if (i == nextcoord.X && j == nextcoord.Y)
+                        {
+                            GameField[nextcoord.X, nextcoord.Y] = Length;
+                            PlayerPos = new SqCoord { X = i, Y = j };
+                        }
+                    }
                 }
+                GameRenderer.Render();
             }
-            GameRenderer.Render();
         }
 
-        public static SqCoord GetCoord(SqCoord nextcoord)
+        /*public static SqCoord GetCoord(SqCoord nextcoord)
         {
             return GameField.Single(entry => entry.X == nextcoord.X && entry.Y == nextcoord.Y);
-        }
+        }*/
 
         public static void Stop()
         {
-            Form1.Timer.Stop();
+            //Form1.Timer.Stop();
+            Form1.TimerEnabled = false;
             MessageBox.Show("Game over!");
         }
     }

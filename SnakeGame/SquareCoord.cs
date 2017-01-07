@@ -9,7 +9,7 @@ namespace SnakeGame
 {
     public static class SquareCoord
     {
-        private static int x;
+        /*private static int x;
         public static int X
         {
             get
@@ -34,20 +34,22 @@ namespace SnakeGame
                 y = value;
                 Game.Refresh();
             }
-        }
-        private const int res = 50;
+        }*/
+        //private const int res = 20;
 
-        public static Point SqCoordToPoint(SqCoord coord)
+        /*public static Point SqCoordToPoint(SqCoord coord)
         {
             return new Point(coord.X * res, coord.Y * res);
-        }
-        public static SqCoord PointToSqCoord(Point point)
+        }*/
+        /*public static SqCoord PointToSqCoord(Point point)
         {
             return new SqCoord { X = point.X / res, Y = point.Y / res };
-        }
-        public static Rectangle SqCoordToRect(SqCoord coord)
+        }*/
+        public static Rectangle SqCoordToRect(SqCoord coord, Size size)
         {
-            return new Rectangle(coord.X * res, coord.Y * res, coord.X * res + res, coord.Y * res + res);
+            int resx = size.Width / Game.GameSize.X;
+            int resy = size.Height / Game.GameSize.Y;
+            return new Rectangle(coord.X * resx, coord.Y * resy, resx, resy);
         }
     }
     public struct SqCoord

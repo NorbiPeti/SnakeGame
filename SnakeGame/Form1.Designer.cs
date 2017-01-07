@@ -42,6 +42,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.BackColor = System.Drawing.Color.Black;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Location = new System.Drawing.Point(12, 41);
             this.panel1.Name = "panel1";
@@ -76,6 +77,7 @@
             this.newSingleplayerGameToolStripMenuItem.Name = "newSingleplayerGameToolStripMenuItem";
             this.newSingleplayerGameToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
             this.newSingleplayerGameToolStripMenuItem.Text = "New singleplayer game";
+            this.newSingleplayerGameToolStripMenuItem.Click += new System.EventHandler(this.newSingleplayerGameToolStripMenuItem_Click);
             // 
             // newMultiplayerGameToolStripMenuItem
             // 

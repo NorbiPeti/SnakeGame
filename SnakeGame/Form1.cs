@@ -12,7 +12,21 @@ namespace SnakeGame
 {
     public partial class Form1 : Form
     {
-        public static Timer Timer;
+        private static Timer Timer;
+        private static bool timerenabled = false;
+        public static bool TimerEnabled
+        {
+            get
+            {
+                return timerenabled;
+            }
+            set
+            {
+                if (value && !timerenabled) //Only start if not running already
+                    Timer.Start();
+                timerenabled = value;
+            }
+        }
         public Form1()
         {
             InitializeComponent();
@@ -32,9 +46,10 @@ namespace SnakeGame
                 Timer.Stop();
                 Game.Refresh();
                 Timer.Interval = Game.UpdateTime;
-                Timer.Start();
+                if (TimerEnabled)
+                    Timer.Start();
             };
-            Timer.Start();
+            //Timer.Start();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -57,6 +72,11 @@ namespace SnakeGame
                 Game.MoveDirection = Direction.Left;
             else if (e.KeyCode == Keys.Right)
                 Game.MoveDirection = Direction.Right;
+        }
+
+        private void newSingleplayerGameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Game.Start(GameStartMode.SinglePlayer);
         }
     }
 }
