@@ -15,7 +15,7 @@ namespace SnakeGame
     public partial class Form1 : Form
     {
         private static Timer Timer;
-        private static Timer SpeedTimer;
+        //private static Timer SpeedTimer;
         private static bool timerenabled = false;
         public static Form1 Instance;
         public static bool TimerEnabled
@@ -45,12 +45,16 @@ namespace SnakeGame
                     if (value && !timerenabled) //Only start if not running already
                     {
                         Timer.Start();
-                        SpeedTimer.Start();
+                        //SpeedTimer.Start();
                     }
                     timerenabled = value;
                     Instance.toolStripTextBox1.Enabled = !value;
                 }));
             }
+        }
+        public static void SetTimer(int remtime)
+        {
+            Timer.Interval -= remtime;
         }
         public Form1()
         {
@@ -73,7 +77,7 @@ namespace SnakeGame
                 if (TimerEnabled)
                     Timer.Start();
             };
-            SpeedTimer = new Timer();
+            /*SpeedTimer = new Timer();
             SpeedTimer.Interval = 10000;
             SpeedTimer.Tick += delegate
             {
@@ -82,7 +86,7 @@ namespace SnakeGame
                 Game.Length++;
                 if (!TimerEnabled)
                     SpeedTimer.Stop();
-            };
+            };*/
         }
 
         private void Form1_Load(object sender, EventArgs e)

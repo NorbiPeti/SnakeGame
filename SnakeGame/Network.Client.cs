@@ -17,7 +17,6 @@ namespace SnakeGame
     {
         private static void ClientListenerThreadRun()
         {
-            //TODO: Game over disconnect
             //TODO: Synchronised point placing on respawn
             try
             {

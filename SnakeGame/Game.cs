@@ -20,7 +20,7 @@ namespace SnakeGame
         public static Label ScoreLabel;
         public static Label LivesLabel;
         public static Panel DialogPanel;
-        public static Player Player = new Player("Player", true);
+        public static Player Player = new Player("Player", true, Color.LightGreen);
         /// <summary>
         /// Opposite of Form1.TimerEnabled
         /// </summary>
@@ -38,10 +38,10 @@ namespace SnakeGame
 
         public static void Start(GameStartMode mode)
         {
-            switch(mode)
+            switch (mode)
             {
                 case GameStartMode.SinglePlayer:
-                    MSGBox.ShowMSGBox("New singleplayer game", "Size:", MSGBoxType.SizeInput, new EventHandler<string>(delegate(object s, string inp)
+                    MSGBox.ShowMSGBox("New singleplayer game", "Size:", MSGBoxType.SizeInput, new EventHandler<string>(delegate (object s, string inp)
                     {
                         int input = int.Parse(inp);
                         if (input > 5)
@@ -68,7 +68,7 @@ namespace SnakeGame
                         MSGBox.ShowMSGBox("Please change your username from default.", "", MSGBoxType.Text);
                         break;
                     }
-                    MSGBox.ShowMSGBox("New multiplayer game", "Name:\nMax. players:", MSGBoxType.MultipleInput, new EventHandler<string>(delegate(object s, string input)
+                    MSGBox.ShowMSGBox("New multiplayer game", "Name:\nMax. players:", MSGBoxType.MultipleInput, new EventHandler<string>(delegate (object s, string input)
                     {
                         string[] strs = input.Split('\n');
                         int num = 0;
@@ -91,8 +91,8 @@ namespace SnakeGame
                     }
 
                     //string matches = Network.Matches.Combine<NetMatch, string>((match, combiner) => combiner += match.Name + "    " + match.Players.Count + "/" + match.MaxPlayers + "    " + match.OwnerName + "\n");
-                    string inputs = "IP:\n";
-                    MSGBox.ShowMSGBox("Connect to game", inputs, MSGBoxType.MultipleInput, new EventHandler<string>(delegate(object s, string input)
+                    string inputs = "IP:";
+                    MSGBox.ShowMSGBox("Connect to game", inputs, MSGBoxType.MultipleInput, new EventHandler<string>(delegate (object s, string input)
                     {
                         IPAddress address;
                         if (IPAddress.TryParse(input.Replace("\n", ""), out address))
@@ -123,7 +123,7 @@ namespace SnakeGame
             Size size = GameRenderer.Panel.Size;
             GameField = new SqCoord[GameSize.X, GameSize.Y];
             //Player.Position = new Point { X = GameSize.X / 2, Y = 1 };
-            var rand=new Random();
+            var rand = new Random();
             Direction dir = (Direction)rand.Next(4);
             do
             {
@@ -215,6 +215,8 @@ namespace SnakeGame
                 {
                     Player.Score += 1000;
                     ScoreLabel.ForeColor = Color.Blue;
+                    Game.Length++;
+                    Form1.SetTimer(100);
                     Game.AddPoint();
                 }
                 else
@@ -231,11 +233,14 @@ namespace SnakeGame
         {
             Random rand = new Random();
             int x, y;
+            int tries = 0;
             do
             {
                 x = rand.Next(GameField.GetLength(0) - 1);
                 y = rand.Next(GameField.GetLength(1) - 1);
-            } while (GameField[x, y].Tick != 0 && GameField[x, y].Type == SquareType.Wall);
+                tries++;
+                //} while (GameField[x, y].Tick != 0 && GameField[x, y].Type == SquareType.Wall);
+            } while (GameField[x, y].Tick != 0 && tries < 10);
             GameField[x, y].Tick = -1;
             GameField[x, y].Type = SquareType.Point;
         }
