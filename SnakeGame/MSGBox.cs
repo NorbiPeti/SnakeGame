@@ -19,7 +19,6 @@ namespace SnakeGame
             if (Shown)
                 return;
             Game.DialogPanel.Controls.Add(new Label { Text = text, Location = new Point(10, 10), Font = new Font(FontFamily.GenericSansSerif, 10f), Size = new Size(200, 50) });
-            //TextBox input = null;
             switch (type)
             {
                 case MSGBoxType.Text:
@@ -30,14 +29,6 @@ namespace SnakeGame
                     Game.DialogPanel.Size = new Size(200, 200);
                     Game.DialogPanel.Controls.Add(new Label { Text = inputtext, Location = new Point(10, 60), Size = new Size(100, 20) });
                     slidervalue = 20;
-                    /*Game.DialogPanel.Controls.Add(input = new TextBox
-                    {
-                        Text = "",
-                        Location = new Point(10, 60),
-                        Multiline = false,
-                        Font = new Font(FontFamily.GenericSansSerif, 10f),
-                        Size = new Size(100, 1)
-                    });*/
                     Graphics gr = Game.DialogPanel.CreateGraphics();
                     gr.FillRectangle(new SolidBrush(Color.Blue), new Rectangle(10, 80, slidervalue, slidervalue));
                     Game.DialogPanel.Paint += delegate
@@ -81,7 +72,6 @@ namespace SnakeGame
                         strs = inputtext.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
                     else
                         strs = new string[0];
-                    //Game.DialogPanel.Controls.Add(new Label { Text = strs[0], Location = new Point(10, 60), Size = new Size(100, 20) });
                     ListBox listbox = new ListBox { Location = new Point(10, 60), Size = new Size(190, 100) };
                     for (int i = 0; i < strs.Length; i++)
                     {
@@ -112,7 +102,6 @@ namespace SnakeGame
                     {
                         Shown = false;
                         if (doneevent != null)
-                            //doneevent(btn, (input == null ? "" : input.Text));
                             doneevent(btn, slidervalue.ToString());
                         CloseMSGBox();
                     };
@@ -178,12 +167,7 @@ namespace SnakeGame
             Game.DialogPanel.Visible = false;
             Game.DialogPanel.Controls.Clear();
             OnCloseEvent = null;
-            //Game.Paused = pause;
-            //Form1.Instance.Activate();
-            //GameRenderer.Panel.Select();
-            //Form1.Instance.Select();
             Form1.Instance.Focus();
-            //Shown = false;
         }
     }
     public enum MSGBoxType

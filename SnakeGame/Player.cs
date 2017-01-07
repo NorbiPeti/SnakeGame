@@ -44,8 +44,36 @@ namespace SnakeGame
         }
         public Point Position;
         public TcpClient Client;
-        public int Score;
-        public int Lives;
+        private int score;
+        public int Score
+        {
+            get
+            {
+                return score;
+            }
+            set
+            {
+                score = value;
+                if (Own)
+                    Network.SyncUpdate(NetUpdateType.Score, value);
+                Form1.RefreshPlayerList();
+            }
+        }
+        private int lives;
+        public int Lives
+        {
+            get
+            {
+                return lives;
+            }
+            set
+            {
+                lives = value;
+                if (Own)
+                    Network.SyncUpdate(NetUpdateType.Lives, value);
+                Form1.RefreshPlayerList();
+            }
+        }
         //public readonly int ID;
         public readonly bool Own;
         public Player(string name, bool own = false, Color color = default(Color), int x = 0, int y = 0)
@@ -61,7 +89,10 @@ namespace SnakeGame
             //NextID++;
             Own = own;
             //Position = new Point(0, 0);
-            Position = new Point(x, y);
+            if (x != 0 && y != 0)
+                Position = new Point(x, y);
+            else
+                Position = new Point(Game.GameSize.X / 2, 1);
             Score = 0;
             Lives = 3;
         }

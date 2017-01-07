@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,7 +22,12 @@ namespace SnakeGame
                 //Connect to the server
                 TcpClient client = new TcpClient(AddressFamily.InterNetworkV6);
                 client.Connect(ConnectedMatch.OwnerIP, Port);
-                var ns = client.GetStream();
+                var ns = client.GetStream().ToSafeNetStream();
+
+                Thread t = Thread.CurrentThread;
+                ns.ErrorStopClient = client;
+                ns.ErrorStopThread = t;
+
                 var sw = new BinaryWriter(ns);
                 sw.Write(52);
                 JObject writedata = new JObject();

@@ -43,7 +43,7 @@ namespace SnakeGame
         private static void ThreadPerPlayer(object c)
         {
             TcpClient client = c as TcpClient;
-            NetworkStream ns = client.GetStream();
+            SafeNetStream ns = client.GetStream().ToSafeNetStream(client, Thread.CurrentThread);
             BinaryReader br = new BinaryReader(ns);
             StopEventPerPlayer += delegate
             {
@@ -122,12 +122,14 @@ namespace SnakeGame
             if (ConnectedMatch.OwnerName == Game.Player.Name)
             {
                 Player p;
-                while (ConnectedMatch.Players.GetEnumerator().MoveNext())
+                //while (ConnectedMatch.Players.GetEnumerator().MoveNext())
+                var en = ConnectedMatch.Players.GetEnumerator();
+                while(en.MoveNext())
                 {
                     p = ConnectedMatch.Players.GetEnumerator().Current;
                     if (p == null || p.Name == player.Name || p.Name == Game.Player.Name)
                         continue;
-                    var bw = new BinaryWriter(p.Client.GetStream());
+                    var bw = new BinaryWriter(p.Client.GetStream().ToSafeNetStream(p.Client, Thread.CurrentThread));
                     bw.Write(playername);
                     bw.Write(updatetype);
                     yield return bw;

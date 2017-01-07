@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using WPFInput = System.Windows.Input;
+//using WPFInput = System.Windows.Input;
 
 namespace SnakeGame
 {
@@ -30,26 +30,31 @@ namespace SnakeGame
                 {
                     Instance.Invoke(new Action(delegate
                     {
-                        if (value && !timerenabled) //Only start if not running already
-                        {
-                            Timer.Start();
-                            SpeedTimer.Start();
-                        }
-                        timerenabled = value;
-                        Instance.toolStripTextBox1.Enabled = !value;
+                        Network.SyncUpdate(NetUpdateType.Pause, !value);
+                        SetTimerWithoutSend(value);
                     }));
                 }
+            }
+        }
+        public static void SetTimerWithoutSend(bool value)
+        {
+            if (!MSGBox.Shown)
+            {
+                Instance.Invoke(new Action(delegate
+                {
+                    if (value && !timerenabled) //Only start if not running already
+                    {
+                        Timer.Start();
+                        SpeedTimer.Start();
+                    }
+                    timerenabled = value;
+                    Instance.toolStripTextBox1.Enabled = !value;
+                }));
             }
         }
         public Form1()
         {
             InitializeComponent();
-            /*Bitmap img = new Bitmap(1, 1);
-            img.SetPixel(0, 0, Color.Black);
-            menuStrip1.BackgroundImage = img;
-            newSingleplayerGameToolStripMenuItem.BackgroundImage = img;
-            newMultiplayerGameToolStripMenuItem.BackgroundImage = img;
-            joinMultiplayerGameToolStripMenuItem.BackgroundImage = img;*/
             menuStrip1.Renderer = new ToolStripProfessionalRenderer(new MenuColorTable());
             menuStrip1.ForeColor = Color.White;
             GameRenderer.Panel = panel1;
@@ -68,7 +73,6 @@ namespace SnakeGame
                 if (TimerEnabled)
                     Timer.Start();
             };
-            //Timer.Start();
             SpeedTimer = new Timer();
             SpeedTimer.Interval = 10000;
             SpeedTimer.Tick += delegate
@@ -91,10 +95,8 @@ namespace SnakeGame
             GameRenderer.Render();
         }
 
-        //private static bool playerpaused = false;
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            //if (e.KeyCode == Keys.Down && WPFInput.Keyboard.IsKeyDown(WPFInput.Key.Down))
             if (e.KeyCode == Keys.Down)
                 Game.MoveDirection = Direction.Down;
             else if (e.KeyCode == Keys.Up)
@@ -105,17 +107,12 @@ namespace SnakeGame
                 Game.MoveDirection = Direction.Right;
             else if (e.KeyCode == Keys.Enter)
             {
-                //MSGBox.CloseMSGBox();
                 if (MSGBox.OnCloseEvent != null)
                     MSGBox.OnCloseEvent(sender, e);
             }
             else if (e.KeyCode == Keys.P || e.KeyCode == Keys.Pause)
             {
                 Game.Paused = !Game.Paused;
-                /*if (Game.Paused)
-                    playerpaused = true;
-                else
-                    playerpaused = false;*/
             }
             else
                 return;
@@ -161,7 +158,6 @@ namespace SnakeGame
             Game.Player.Name = toolStripTextBox1.Text;
         }
 
-        //private static Timer resizetimer = new Timer();
         private void Form1_Resize(object sender, EventArgs e)
         {
             GameRenderer.Render();
@@ -186,21 +182,18 @@ namespace SnakeGame
             Action action = new Action(() =>
             {
                 Instance.flowLayoutPanel1.Controls.Clear();
-                /*if (Network.ConnectedMatch == null)
-                {
-                    Instance.flowLayoutPanel1.Controls.Add(new Label { Text = Game.Player.Name, ForeColor = Game.Player.Color });
-                    Instance.flowLayoutPanel1.Controls.Add(new Label { Text = "Score: " + Game.Player.Score, ForeColor = Game.Player.Color });
-                }*/
                 if (Network.ConnectedMatch != null)
                 {
                     foreach (Player player in Network.ConnectedMatch.Players)
                     {
                         if (player.Name == Game.Player.Name)
-                            continue; //The current player's score/lives value is shown already
-                        Instance.flowLayoutPanel1.Controls.Add(new Label { Text = player.Name, ForeColor = Game.Player.Color });
-                        Instance.flowLayoutPanel1.Controls.Add(new Label { Text = "Score: " + Game.Player.Score, ForeColor = Game.Player.Color });
+                            continue;
+                        Instance.flowLayoutPanel1.Controls.Add(new Label { Text = player.Name, ForeColor = player.Color });
+                        Instance.flowLayoutPanel1.Controls.Add(new Label { Text = "Score: " + player.Score, ForeColor = player.Color });
                     }
                 }
+                Instance.scoreLabel.Text = "Score: " + Game.Player.Score;
+                Instance.livesLabel.Text = "Lives: " + Game.Player.Lives;
             });
             if (Instance.InvokeRequired)
                 Instance.Invoke(action);

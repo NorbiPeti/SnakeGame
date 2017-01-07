@@ -33,11 +33,15 @@ namespace SnakeGame
                     bool isserver = ConnectedMatch.OwnerName == Game.Player.Name;
                     if (!isserver)
                     {
-                        bw = new BinaryWriter(ConnectedMatch.GetPlayerByName(ConnectedMatch.OwnerName).Client.GetStream()); //If not server, send only to server
+                        //bw = new BinaryWriter(ConnectedMatch.GetPlayerByName(ConnectedMatch.OwnerName).Client.GetStream().ToSafeNetStream()); //If not server, send only to server
+                        var c = ConnectedMatch.GetPlayerByName(ConnectedMatch.OwnerName).Client; //If not server, send only to server
+                        bw = new BinaryWriter(c.GetStream().ToSafeNetStream(c, null));
                     }
                     else
                     {
-                        bw = new BinaryWriter(player.Client.GetStream());
+                        //bw = new BinaryWriter(player.Client.GetStream().ToSafeNetStream());
+                        var c = player.Client;
+                        bw = new BinaryWriter(c.GetStream().ToSafeNetStream(c, null));
                         bw.Write(Game.Player.Name); //Otherwise write playername as listener expects
                     }
                     bw.Write((int)updatetype);
@@ -61,6 +65,18 @@ namespace SnakeGame
                             Point point = (Point)data;
                             bw.Write(point.X);
                             bw.Write(point.Y);
+                            break;
+                        case NetUpdateType.Score:
+                            int score = (int)data;
+                            bw.Write(score);
+                            break;
+                        case NetUpdateType.Lives:
+                            int lives = (int)data;
+                            bw.Write(lives);
+                            break;
+                        case NetUpdateType.Pause:
+                            bool pause = (bool)data;
+                            bw.Write(pause);
                             break;
                     }
                     if (!isserver)
@@ -280,6 +296,27 @@ namespace SnakeGame
                             bw.Write(player.Position.Y);
                         }
                         break;
+                    case NetUpdateType.Score:
+                        player.Score = br.ReadInt32();
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                            bw.Write(player.Score);
+                        }
+                        break;
+                    case NetUpdateType.Lives:
+                        player.Lives = br.ReadInt32();
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                            bw.Write(player.Lives);
+                        }
+                        break;
+                    case NetUpdateType.Pause:
+                        Form1.SetTimerWithoutSend(!br.ReadBoolean());
+                        foreach(BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                            bw.Write(Game.Paused);
+                        }
+                        break;
                 }
             }
             catch (IOException)
@@ -300,6 +337,9 @@ namespace SnakeGame
         Move,
         //Login, - Login==Connect
         Leave,
-        Teleport
+        Teleport,
+        Score,
+        Lives,
+        Pause
     }
 }

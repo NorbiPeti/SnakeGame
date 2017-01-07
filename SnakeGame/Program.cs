@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,7 +22,11 @@ namespace SnakeGame
 
         public static void HandleException(Exception e)
         {
-            MessageBox.Show("Error!\n" + e.Message);
+            if (e.GetType() == typeof(ThreadAbortException))
+            {
+            }
+            else
+                MessageBox.Show("Error!\n" + e.Message);
         }
     }
 }
