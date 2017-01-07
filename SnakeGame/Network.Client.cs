@@ -35,16 +35,23 @@ namespace SnakeGame
             {
                 for (int j = 0; j < Game.GameSize.Y; j++)
                 {
-                    Game.GameField[i, j].PlayerName = (string)readdata["GameField"][i][j]["PlayerName"];
-                    Game.GameField[i, j].Tick = (int)readdata["GameField"][i][j]["Tick"];
-                    Game.GameField[i, j].Type = (SquareType)Enum.Parse(typeof(SquareType), (string)readdata["GameField"][i][j]["Type"]);
+                    Game.GameField[i, j].PlayerName = (string)readdata["GameField"][i + ""][j + ""]["PlayerName"];
+                    Game.GameField[i, j].Tick = (int)readdata["GameField"][i + ""][j + ""]["Tick"];
+                    Game.GameField[i, j].Type = (SquareType)Enum.Parse(typeof(SquareType), (string)readdata["GameField"][i + ""][j + ""]["Type"]);
                 }
             }
-            foreach(JObject item in readdata["Players"])
+            foreach(JProperty item in readdata["Players"])
             {
-                MessageBox.Show(item.ToString());
+                ConnectedMatch.Players.Add(new Player(item.Name, color: Color.FromArgb((int)item.Value["Color"]), x: (int)item.Value["Position"]["X"], y: (int)item.Value["Position"]["Y"]));
             }
-
+            Game.Paused = false;
+            SendUpdate = true;
+            while (true)
+            {
+                string playername = sr.ReadString();
+                Player player = ConnectedMatch.Players.Single(entry => entry.Name == playername);
+                ReceiveAndProcessData(player, sr);
+            }
         }
     }
 }

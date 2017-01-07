@@ -28,13 +28,16 @@ namespace SnakeGame
             {
                 if (!MSGBox.Shown)
                 {
-                    if (value && !timerenabled) //Only start if not running already
+                    Instance.Invoke(new Action(delegate
                     {
-                        Timer.Start();
-                        SpeedTimer.Start();
-                    }
-                    timerenabled = value;
-                    Instance.toolStripTextBox1.Enabled = !value;
+                        if (value && !timerenabled) //Only start if not running already
+                        {
+                            Timer.Start();
+                            SpeedTimer.Start();
+                        }
+                        timerenabled = value;
+                        Instance.toolStripTextBox1.Enabled = !value;
+                    }));
                 }
             }
         }
@@ -128,6 +131,8 @@ namespace SnakeGame
         private bool formdeactivated = false;
         private void Form1_Activated(object sender, EventArgs e)
         {
+            if (Network.ConnectedMatch != null)
+                return;
             if (formdeactivated)
                 Game.Paused = false;
             formdeactivated = false;
@@ -135,6 +140,8 @@ namespace SnakeGame
 
         private void Form1_Deactivate(object sender, EventArgs e)
         {
+            if (Network.ConnectedMatch != null)
+                return;
             formdeactivated = !Game.Paused;
             Game.Paused = true;
         }
@@ -170,6 +177,35 @@ namespace SnakeGame
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             Network.Leave(); //Stop threads and such
+        }
+        
+        public static void RefreshPlayerList()
+        {
+            if (Instance == null)
+                return;
+            Action action = new Action(() =>
+            {
+                Instance.flowLayoutPanel1.Controls.Clear();
+                /*if (Network.ConnectedMatch == null)
+                {
+                    Instance.flowLayoutPanel1.Controls.Add(new Label { Text = Game.Player.Name, ForeColor = Game.Player.Color });
+                    Instance.flowLayoutPanel1.Controls.Add(new Label { Text = "Score: " + Game.Player.Score, ForeColor = Game.Player.Color });
+                }*/
+                if (Network.ConnectedMatch != null)
+                {
+                    foreach (Player player in Network.ConnectedMatch.Players)
+                    {
+                        if (player.Name == Game.Player.Name)
+                            continue; //The current player's score/lives value is shown already
+                        Instance.flowLayoutPanel1.Controls.Add(new Label { Text = player.Name, ForeColor = Game.Player.Color });
+                        Instance.flowLayoutPanel1.Controls.Add(new Label { Text = "Score: " + Game.Player.Score, ForeColor = Game.Player.Color });
+                    }
+                }
+            });
+            if (Instance.InvokeRequired)
+                Instance.Invoke(action);
+            else
+                action();
         }
     }
     public static class Ext

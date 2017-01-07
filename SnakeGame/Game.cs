@@ -24,6 +24,7 @@ namespace SnakeGame
         //public static string UserName;
         public static Player Player = new Player("Player", true);
         private static int score;
+        [Obsolete("Use Game.Player.Score")]
         public static int Score
         {
             get
@@ -37,6 +38,7 @@ namespace SnakeGame
             }
         }
         private static int lives;
+        [Obsolete("Use Game.Player.Lives")]
         public static int Lives
         {
             get
@@ -51,6 +53,8 @@ namespace SnakeGame
         }
         /// <summary>
         /// Opposite of Form1.TimerEnabled
+        /// TODO: Send pause/resume event
+        /// (View -> Task List -> Comments
         /// </summary>
         public static bool Paused
         {
@@ -104,7 +108,7 @@ namespace SnakeGame
                             match.Players.Add(Game.Player);
                             Game.Reset();
                             Network.CreateGame(match);
-                            Game.Paused = false;
+                            //Game.Paused = false; - Start in thread
                         }
                         else
                             Game.Paused = true;
@@ -131,7 +135,7 @@ namespace SnakeGame
                         {
                             Game.Reset();
                             Network.Connect(Network.Matches[num]);
-                            Game.Paused = false;
+                            //Game.Paused = false; - Start in thread
                         }
                         else
                             Game.Paused = true;
@@ -226,7 +230,7 @@ namespace SnakeGame
                 }
             }
             Point nextcoord = MovePlayerPre(Player, MoveDirection);
-            Network.SyncUpdate(NetUpdateType.Move);
+            Network.SyncUpdate(NetUpdateType.Move, MoveDirection);
             /*if (nextcoord.X >= GameField.GetLength(0) || nextcoord.Y >= GameField.GetLength(1))
             {
                 MessageBox.Show("Error!");
@@ -235,6 +239,7 @@ namespace SnakeGame
             if (Game.GameField[nextcoord.X, nextcoord.Y].Tick != 0 && Game.GameField[nextcoord.X, nextcoord.Y].Type != SquareType.Point)
             {
                 Lives--;
+                LivesLabel.ForeColor = Color.Red;
                 if (Lives <= 0)
                     Stop();
                 else
@@ -242,11 +247,15 @@ namespace SnakeGame
             }
             else
             {
+                LivesLabel.ForeColor = Color.White;
                 if (GameField[nextcoord.X, nextcoord.Y].Type == SquareType.Point)
                 {
                     Score += 1000;
+                    ScoreLabel.ForeColor = Color.Blue;
                     Game.AddPoint();
                 }
+                else
+                    ScoreLabel.ForeColor = Color.White;
                 if (Score > 0)
                     Score -= new Random().Next(1, 20);
                 MovePlayerPost(Player, nextcoord);
@@ -327,6 +336,22 @@ namespace SnakeGame
             colorlist.RemoveAll(entry => Color.FromKnownColor(entry).IsSystemColor);
             colors = colorlist.ToArray();
             return Color.FromKnownColor(colors[new Random().Next(colors.Length)]);
+        }
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="filename"></param>
+        public static void Load(string filename)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="filename"></param>
+        public static void Save(string filename)
+        {
+            throw new NotImplementedException();
         }
     }
     public enum GameStartMode

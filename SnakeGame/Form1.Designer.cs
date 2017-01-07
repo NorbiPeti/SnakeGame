@@ -38,6 +38,7 @@
             this.scoreLabel = new System.Windows.Forms.Label();
             this.livesLabel = new System.Windows.Forms.Label();
             this.DialogPanel = new System.Windows.Forms.Panel();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -48,9 +49,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.Black;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Location = new System.Drawing.Point(12, 64);
+            this.panel1.Location = new System.Drawing.Point(12, 83);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(600, 357);
+            this.panel1.Size = new System.Drawing.Size(600, 338);
             this.panel1.TabIndex = 0;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
@@ -129,7 +130,7 @@
             // livesLabel
             // 
             this.livesLabel.AutoSize = true;
-            this.livesLabel.Location = new System.Drawing.Point(14, 48);
+            this.livesLabel.Location = new System.Drawing.Point(14, 53);
             this.livesLabel.Name = "livesLabel";
             this.livesLabel.Size = new System.Drawing.Size(32, 13);
             this.livesLabel.TabIndex = 3;
@@ -146,12 +147,23 @@
             this.DialogPanel.TabIndex = 0;
             this.DialogPanel.Visible = false;
             // 
+            // flowLayoutPanel1
+            // 
+            this.flowLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(239, 31);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(373, 46);
+            this.flowLayoutPanel1.TabIndex = 4;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(624, 442);
+            this.Controls.Add(this.flowLayoutPanel1);
             this.Controls.Add(this.DialogPanel);
             this.Controls.Add(this.livesLabel);
             this.Controls.Add(this.scoreLabel);
@@ -187,6 +199,7 @@
         private System.Windows.Forms.Label livesLabel;
         private System.Windows.Forms.Panel DialogPanel;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
     }
 }
 

@@ -19,9 +19,45 @@ namespace SnakeGame
     public static partial class Network
     {
         public const int Port = 12885;
-        public static void SyncUpdate(NetUpdateType updatetype) //If we are a server, forward every valid data we get
+        public static void SyncUpdate(NetUpdateType updatetype, object data)
         {
-
+            if (ConnectedMatch == null)
+                return;
+            BinaryWriter bw;
+            foreach (Player player in ConnectedMatch.Players)
+            {
+                if (player.Name == Game.Player.Name)
+                    continue; //Don't send to ourselves
+                bool isserver = ConnectedMatch.OwnerName == Game.Player.Name;
+                if (!isserver)
+                {
+                    bw = new BinaryWriter(ConnectedMatch.GetPlayerByName(ConnectedMatch.OwnerName).Client.GetStream());
+                }
+                else
+                {
+                    bw = new BinaryWriter(player.Client.GetStream());
+                }
+                bw.Write((int)updatetype);
+                switch (updatetype)
+                {
+                    case NetUpdateType.Name:
+                        string newname = (string)data;
+                        bw.Write(newname);
+                        break;
+                    case NetUpdateType.Color:
+                        int color = ((Color)data).ToArgb();
+                        bw.Write(color);
+                        break;
+                    case NetUpdateType.Move:
+                        int direction = (int)data; //Converting to enum and back to int is unnecessary
+                        bw.Write(direction);
+                        break;
+                    case NetUpdateType.Leave:
+                        break;
+                }
+                if (!isserver)
+                    break; //If not server, only send to the server
+            }
         }
         public static List<NetMatch> Matches = new List<NetMatch>();
         public static NetMatch ConnectedMatch { get; private set; }
@@ -111,6 +147,8 @@ namespace SnakeGame
         {
             if (ConnectedMatch == null)
                 return;
+            SendUpdate = false;
+            SyncUpdate(NetUpdateType.Leave, null);
             if (ConnectedMatch.OwnerName == Game.Player.Name)
             {
                 using (var client = new WebClient())
@@ -169,6 +207,57 @@ namespace SnakeGame
                 else
                     (ReceiverThread = new Thread(new ThreadStart(ClientListenerThreadRun))).Start();
             }
+        }
+        public static bool SendUpdate = false;
+        private static bool ReceiveAndProcessData(Player player, BinaryReader br)
+        {
+            string playername = player.Name;
+            try
+            {
+                NetUpdateType updatetype = (NetUpdateType)br.ReadInt32();
+                switch (updatetype)
+                {
+                    case NetUpdateType.Name:
+                        string newname = br.ReadString();
+                        player.Name = newname;
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        { //ForwardMessage prepares each send and then here the only thing to do is to send the extra data
+                            bw.Write(newname);
+                        }
+                        break;
+                    case NetUpdateType.Color:
+                        Color color = Color.FromArgb(br.ReadInt32());
+                        player.Color = color;
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                            bw.Write(color.ToArgb());
+                        }
+                        break;
+                    case NetUpdateType.Move:
+                        Direction direction = (Direction)br.ReadInt32();
+                        Game.MovePlayerPost(player, Game.MovePlayerPre(player, direction));
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                            bw.Write((int)direction);
+                        }
+                        break;
+                    /*case NetUpdateType.Login:
+                        ConnectedMatch.Players.Add(new Player(playername, ConnectedMatch.NextID));
+                        break;*/
+                    case NetUpdateType.Leave:
+                        foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
+                        {
+                        }
+                        Network.ConnectedMatch.Players.RemoveAll(entry => entry.Name == playername);
+                        player.Client.Close();
+                        break;
+                }
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            return true;
         }
     }
     public enum NetUpdateType

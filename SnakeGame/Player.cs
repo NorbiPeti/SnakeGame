@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -20,9 +21,10 @@ namespace SnakeGame
             }
             set
             {
-                name = value;
                 if (Own)
-                    Network.SyncUpdate(NetUpdateType.Name);
+                    Network.SyncUpdate(NetUpdateType.Name, value);
+                name = value; //Only set name after sending update (which sends old name too)
+                Form1.RefreshPlayerList();
             }
         }
         private Color color;
@@ -36,14 +38,17 @@ namespace SnakeGame
             {
                 color = value;
                 if (Own)
-                    Network.SyncUpdate(NetUpdateType.Color);
+                    Network.SyncUpdate(NetUpdateType.Color, value);
+                Form1.RefreshPlayerList();
             }
         }
         public Point Position;
         public TcpClient Client;
+        public int Score;
+        public int Lives;
         //public readonly int ID;
         public readonly bool Own;
-        public Player(string name, bool own = false, Color color = default(Color))
+        public Player(string name, bool own = false, Color color = default(Color), int x = 0, int y = 0)
         {
             Name = name;
             if (color == default(Color))
@@ -55,11 +60,101 @@ namespace SnakeGame
             //ID = NextID;
             //NextID++;
             Own = own;
-            Position = new Point(0, 0);
+            //Position = new Point(0, 0);
+            Position = new Point(x, y);
+            Score = 0;
+            Lives = 3;
         }
         /*public static void Reset()
         {
             NextID = 0;
         }*/
+    }
+    public class PlayerCollection : IList<Player>
+    {
+        private List<Player> _list = new List<Player>();
+
+        public int IndexOf(Player item)
+        {
+            return _list.IndexOf(item);
+        }
+
+        public void Insert(int index, Player item)
+        {
+            _list.Insert(index, item);
+            Form1.RefreshPlayerList();
+        }
+
+        public void RemoveAt(int index)
+        {
+            _list.RemoveAt(index);
+            Form1.RefreshPlayerList();
+        }
+
+        public Player this[int index]
+        {
+            get
+            {
+                return _list[index];
+            }
+            set
+            {
+                _list[index] = value;
+            }
+        }
+
+        public void Add(Player item)
+        {
+            _list.Add(item);
+            Form1.RefreshPlayerList();
+        }
+
+        public void Clear()
+        {
+            _list.Clear();
+            Form1.RefreshPlayerList();
+        }
+
+        public bool Contains(Player item)
+        {
+            return _list.Contains(item);
+        }
+
+        public void CopyTo(Player[] array, int arrayIndex)
+        {
+            _list.CopyTo(array, arrayIndex);
+        }
+
+        public int Count
+        {
+            get { return _list.Count; }
+        }
+
+        public bool IsReadOnly
+        {
+            get { return false; }
+        }
+
+        public bool Remove(Player item)
+        {
+            bool ret = _list.Remove(item);
+            Form1.RefreshPlayerList();
+            return ret;
+        }
+
+        public int RemoveAll(Predicate<Player> match)
+        {
+            return _list.RemoveAll(match);
+        }
+
+        public IEnumerator<Player> GetEnumerator()
+        {
+            return _list.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _list.GetEnumerator();
+        }
     }
 }

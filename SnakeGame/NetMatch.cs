@@ -13,7 +13,12 @@ namespace SnakeGame
         public string Name = "";
         public int MaxPlayers = 0;
         //public List<string> PlayerNames = new List<string>();
-        public List<Player> Players = new List<Player>();
+        /// <summary>
+        /// TODO: Send player join/leave to master server
+        /// </summary>
+        //public List<Player> Players = new List<Player>();
+        public PlayerCollection Players = new PlayerCollection();
+        
         private string ownername = "";
         public string OwnerName
         {
