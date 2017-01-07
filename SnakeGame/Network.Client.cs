@@ -17,6 +17,8 @@ namespace SnakeGame
     {
         private static void ClientListenerThreadRun()
         {
+            //TODO: Game over disconnect
+            //TODO: Synchronised point placing on respawn
             try
             {
                 //Connect to the server
@@ -39,6 +41,7 @@ namespace SnakeGame
                 Game.GameSize = new Point((int)readdata["GameSize"]["X"], (int)readdata["GameSize"]["Y"]);
                 Game.GameField = new SqCoord[Game.GameSize.X, Game.GameSize.Y];
                 Game.Length = (int)readdata["Length"];
+                ConnectedMatch.OwnerName = (string)readdata["OwnerName"]; //2015.08.29.
                 for (int i = 0; i < Game.GameSize.X; i++)
                 {
                     for (int j = 0; j < Game.GameSize.Y; j++)
@@ -57,6 +60,7 @@ namespace SnakeGame
                 }
                 Game.Paused = false;
                 SendUpdate = true;
+                Game.Reset(false);
                 while (true)
                 {
                     string playername = sr.ReadString();
@@ -70,6 +74,10 @@ namespace SnakeGame
                         Program.HandleException(e);
                     }
                 }
+            }
+            catch(ObjectDisposedException)
+            {
+                return;
             }
             catch (Exception e)
             {

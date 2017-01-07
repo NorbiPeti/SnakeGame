@@ -93,82 +93,12 @@ namespace SnakeGame
         }
         public static List<NetMatch> Matches = new List<NetMatch>();
         public static NetMatch ConnectedMatch { get; private set; }
-        public static void DownloadGameList()
-        {
-            using (var client = new WebClient())
-            {
-                var values = new NameValueCollection();
-                values["client"] = "cheesecrescent"; //Sajtoskifli
-
-                try
-                {
-                    var response = client.UploadValues("http://snakegame.16mb.com", values);
-
-                    Matches.Clear();
-                    var responseString = Encoding.Default.GetString(response);
-                    string[] responses = responseString.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
-                    int x = 0;
-                    while (x < responses.Length)
-                    {
-                        var match = new NetMatch();
-                        match.Name = responses[x];
-                        x++;
-                        match.OwnerName = responses[x];
-                        x++;
-                        if (!Int32.TryParse(responses[x], out match.MaxPlayers))
-                            MessageBox.Show("Error! The received text is in wrong format.");
-                        x++;
-                        int players;
-                        if (!Int32.TryParse(responses[x], out players))
-                            MessageBox.Show("Error! The received text is in wrong format.");
-                        x++;
-                        for (int i = x; i < x + players; i++)
-                            match.Players.Add(new Player(responses[i]));
-                        x += players;
-                        //match.OwnerIP = IPAddress.Parse(responses[x]);
-                        match.OwnerIP = responses[x].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(entry => IPAddress.Parse(entry)).ToArray();
-                        x++;
-                        Matches.Add(match);
-                    }
-                }
-                catch (WebException) { }
-                catch (Exception e)
-                {
-                    Program.HandleException(e);
-                }
-            }
-        }
         public static void CreateGame(NetMatch match)
         {
-            //MessageBox.Show("Create game: " + match.Name + " (" + match.MaxPlayers + " players)");
-            using (var client = new WebClient())
-            {
-                var values = new NameValueCollection();
-                values["client"] = Game.Player.Name;
-                values["name"] = match.Name;
-                values["maxplayers"] = match.MaxPlayers.ToString();
-                values["action"] = "create";
-
-                /*IPAddress[] ip = GetIPs();
-                if (ip == null)
-                    return;*/
-                values["ip"] = "";
-                Array.ForEach(match.OwnerIP, new Action<IPAddress>(entry => values["ip"] += entry.ToString() + ";"));
-
-                var response = client.UploadValues("http://snakegame.16mb.com", values);
-
-                var responseString = Encoding.Default.GetString(response);
-                if (responseString != "OK")
-                    MessageBox.Show("Error!\n" + responseString);
-                else
-                {
-                    Join(match, true);
-                }
-            }
+            Join(match, true);
         }
         public static void Connect(NetMatch match)
         {
-            //MessageBox.Show("Connect to game: " + match.Name + " (" + match.MaxPlayers + " players)");
             Join(match, false);
         }
         public static void Join(NetMatch match, bool server)
@@ -183,31 +113,11 @@ namespace SnakeGame
         {
             if (ConnectedMatch == null)
                 return;
-            SendUpdate = false;
             SyncUpdate(NetUpdateType.Leave, null);
+            SendUpdate = false;
             if (ConnectedMatch.OwnerName == Game.Player.Name)
             {
-                using (var client = new WebClient())
-                {
-                    var values = new NameValueCollection();
-                    values["client"] = Game.Player.Name;
-                    values["name"] = ConnectedMatch.Name;
-                    values["maxplayers"] = ConnectedMatch.MaxPlayers.ToString();
-                    values["action"] = "remove";
-
-                    /*IPAddress[] ip = GetIPs();
-                    if (ip == null)
-                        return;*/
-                    values["ip"] = "";
-                    Array.ForEach(ConnectedMatch.OwnerIP, new Action<IPAddress>(entry => values["ip"] += entry.ToString() + ";"));
-
-                    var response = client.UploadValues("http://snakegame.16mb.com", values);
-
-                    var responseString = Encoding.Default.GetString(response);
-                    if (responseString != "OK")
-                        MessageBox.Show("Error!\n" + responseString);
-                }
-            Listener.Stop();
+                Listener.Stop();
             }
             ReceiverThread.Abort();
             if (StopEventPerPlayer != null)
@@ -289,6 +199,7 @@ namespace SnakeGame
                         break;
                     case NetUpdateType.Teleport:
                         player.Position = new Point(br.ReadInt32(), br.ReadInt32());
+                        Console.WriteLine("Teleporting player " + player.Name + " to point " + player.Position);
                         Game.MovePlayerPost(player, player.Position);
                         foreach (BinaryWriter bw in ForwardMessage(player, playername, (int)updatetype))
                         {
@@ -320,6 +231,10 @@ namespace SnakeGame
                 }
             }
             catch (IOException)
+            {
+                return false;
+            }
+            catch(ObjectDisposedException)
             {
                 return false;
             }

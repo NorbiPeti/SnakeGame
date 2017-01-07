@@ -78,6 +78,7 @@ namespace SnakeGame
                 BinaryWriter bwp = new BinaryWriter(ns);
                 var senddata = new JObject();
                 senddata["Length"] = Game.Length;
+                senddata["OwnerName"] = Game.Player.Name; //2015.08.29.
                 senddata["GameSize"] = new JObject();
                 senddata["GameSize"]["X"] = Game.GameSize.X;
                 senddata["GameSize"]["Y"] = Game.GameSize.Y;

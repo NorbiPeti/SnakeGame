@@ -12,11 +12,6 @@ namespace SnakeGame
     {
         public string Name = "";
         public int MaxPlayers = 0;
-        //public List<string> PlayerNames = new List<string>();
-        /// <summary>
-        /// TODO: Send player join/leave to master server
-        /// </summary>
-        //public List<Player> Players = new List<Player>();
         public PlayerCollection Players = new PlayerCollection();
         
         private string ownername = "";
@@ -42,17 +37,7 @@ namespace SnakeGame
         public IPAddress[] OwnerIP;
         public Player GetPlayerByName(string name)
         {
-            /*try
-            {
-                //return Players.Single(entry => entry.ID == id);
-                return Players.Single(entry => entry.Name == name);
-            }
-            catch
-            {
-                return null;
-            }*/
-            return Players.SingleOrDefault(entry => entry.Name == name);
+            return Players.FirstOrDefault(entry => entry.Name == name);
         }
-        //public int NextID = 0;
     }
 }

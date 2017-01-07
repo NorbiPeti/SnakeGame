@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace SnakeGame
     {
         public static Point GameSize;
         public static SqCoord[,] GameField;
-        public static int Length = 4;
+        public static int Length;
         public static int UpdateTime = 800;
         public static Direction MoveDirection;
         public static Label ScoreLabel;
@@ -22,8 +23,6 @@ namespace SnakeGame
         public static Player Player = new Player("Player", true);
         /// <summary>
         /// Opposite of Form1.TimerEnabled
-        /// TODO: Send pause/resume event
-        /// (View -> Task List -> Comments
         /// </summary>
         public static bool Paused
         {
@@ -90,16 +89,17 @@ namespace SnakeGame
                         MSGBox.ShowMSGBox("Please change your username from default.", "", MSGBoxType.Text);
                         break;
                     }
-                    Network.DownloadGameList();
-                    string matches = Network.Matches.Combine<NetMatch, string>((match, combiner) => combiner += match.Name + "    " + match.Players.Count + "/" + match.MaxPlayers + "    " + match.OwnerName + "\n");
-                    MSGBox.ShowMSGBox("Connect to game", matches, MSGBoxType.List, new EventHandler<string>(delegate(object s, string input)
+
+                    //string matches = Network.Matches.Combine<NetMatch, string>((match, combiner) => combiner += match.Name + "    " + match.Players.Count + "/" + match.MaxPlayers + "    " + match.OwnerName + "\n");
+                    string inputs = "IP:\n";
+                    MSGBox.ShowMSGBox("Connect to game", inputs, MSGBoxType.MultipleInput, new EventHandler<string>(delegate(object s, string input)
                     {
-                        int num = 0;
-                        if (int.TryParse(input, out num) && num != -1)
+                        IPAddress address;
+                        if (IPAddress.TryParse(input.Replace("\n", ""), out address))
                         {
                             Game.Reset();
-                            Network.Connect(Network.Matches[num]);
-                            Game.Reset(false);
+                            Network.Connect(new NetMatch { OwnerIP = new IPAddress[] { address } });
+                            //Game.Reset(false); - On successfull connect event
                         }
                         else
                             Game.Paused = true;
@@ -151,7 +151,7 @@ namespace SnakeGame
             {
                 Player.Score = 0;
                 Player.Lives = 3;
-                UpdateTime = 800;
+                UpdateTime = 600;
                 Length = 4;
             }
             Network.SyncUpdate(NetUpdateType.Teleport, Player.Position);
@@ -209,7 +209,8 @@ namespace SnakeGame
             }
             else
             {
-                LivesLabel.ForeColor = Color.White;
+                //LivesLabel.ForeColor = Color.White;
+                LivesLabel.ForeColor = Game.Player.Color;
                 if (GameField[nextcoord.X, nextcoord.Y].Type == SquareType.Point)
                 {
                     Player.Score += 1000;
@@ -217,7 +218,8 @@ namespace SnakeGame
                     Game.AddPoint();
                 }
                 else
-                    ScoreLabel.ForeColor = Color.White;
+                    //ScoreLabel.ForeColor = Color.White;
+                    ScoreLabel.ForeColor = Game.Player.Color;
                 if (Player.Score > 0)
                     Player.Score -= new Random().Next(1, 20);
                 MovePlayerPost(Player, nextcoord);
@@ -242,6 +244,7 @@ namespace SnakeGame
         {
             MSGBox.ShowMSGBox("Game over!", "", MSGBoxType.Text);
             Game.Paused = true;
+            Network.Leave(); //2015.08.29.
         }
 
         public static Point MovePlayerPre(Player player, Direction direction)
