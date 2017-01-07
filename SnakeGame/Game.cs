@@ -19,14 +19,15 @@ namespace SnakeGame
         public static Point GameSize;
         //public static List<SqCoord> GameField;
         public static SqCoord[,] GameField;
-        public static Point PlayerPos;
+        //public static Point Player.Position;
         public static int Length = 4;
         public static int UpdateTime = 800;
         public static Direction MoveDirection;
         public static Label ScoreLabel;
         public static Label LivesLabel;
         public static Panel DialogPanel;
-        public static string UserName;
+        //public static string UserName;
+        public static Player Player = new Player("Player", 0, true);
         private static int score;
         public static int Score
         {
@@ -93,7 +94,7 @@ namespace SnakeGame
                     }));
                     break;
                 case GameStartMode.MultiPlayer:
-                    if (Game.UserName == "Player")
+                    if (Game.Player.Name == "Player")
                     {
                         MSGBox.ShowMSGBox("Please change your username from default.", "", MSGBoxType.Text);
                         break;
@@ -105,6 +106,7 @@ namespace SnakeGame
                         if (int.TryParse(strs[1], out num))
                         {
                             var match = new NetMatch { Name = strs[0], MaxPlayers = num, OwnerIP = Network.GetIPs() };
+                            match.Players.Add(Game.Player);
                             Network.CreateGame(match);
                             Game.Paused = false;
                         }
@@ -113,7 +115,7 @@ namespace SnakeGame
                     }));
                     break;
                 case GameStartMode.Connect:
-                    if (Game.UserName == "Player")
+                    if (Game.Player.Name == "Player")
                     {
                         MSGBox.ShowMSGBox("Please change your username from default.", "", MSGBoxType.Text);
                         break;
@@ -150,12 +152,13 @@ namespace SnakeGame
             //GameField = new List<SqCoord>(GameSize.X * GameSize.Y);
             //GameField = new int[GameSize.X, GameSize.Y];
             GameSize = new Point { X = size.Width / 20, Y = size.Height / 20 };
-            UserName = "Player";
+            //UserName = "Player";
+            //Player = new Player("Player", 0);
             Game.Reset();
-            //GameField.Single(entry => entry.X == PlayerPos.X && entry.Y == PlayerPos.Y).Tick;
+            //GameField.Single(entry => entry.X == Player.Position.X && entry.Y == Player.Position.Y).Tick;
             /*for (int i = 0; i < GameField.Count; i++)
             {
-                if(GameField[i].X==PlayerPos.X && GameField[i].Y==PlayerPos.Y)
+                if(GameField[i].X==Player.Position.X && GameField[i].Y==Player.Position.Y)
                 {
                     GameField[i].Tick = Length;
                 }
@@ -168,7 +171,7 @@ namespace SnakeGame
             Size size = GameRenderer.Panel.Size;
             //GameSize = new Point { X = size.Width / 20, Y = size.Height / 20 };
             GameField = new SqCoord[GameSize.X, GameSize.Y];
-            PlayerPos = new Point { X = GameSize.X / 2, Y = 1 };
+            Player.Position = new Point { X = GameSize.X / 2, Y = 1 };
             if (fullreset)
             {
                 Score = 0;
@@ -183,7 +186,7 @@ namespace SnakeGame
                     /*SqCoord coord = new SqCoord { X = i, Y = j, Tick = 0 };
                     if (i == 0 || j == 0 || i == GameSize.X - 1 || j == GameSize.Y - 1)
                         coord.Tick = -1;
-                    else if (i == PlayerPos.X && j == PlayerPos.Y)
+                    else if (i == Player.Position.X && j == Player.Position.Y)
                         coord.Tick = 4;
                     GameField.Add(coord);*/
                     if (i == 0 || j == 0 || i == GameSize.X - 1 || j == GameSize.Y - 1)
@@ -191,7 +194,7 @@ namespace SnakeGame
                         GameField[i, j].Type = SquareType.Wall;
                         GameField[i, j].Tick = -1;
                     }
-                    else if (i == PlayerPos.X && j == PlayerPos.Y)
+                    else if (i == Player.Position.X && j == Player.Position.Y)
                     {
                         GameField[i, j].Type = SquareType.Player;
                         GameField[i, j].Tick = Length;
@@ -211,40 +214,18 @@ namespace SnakeGame
         {
             //Decrease any positive Ticks; if next player position is other than zero, game over
             //Otherwise set next player position and set Tick on player position to current Length
-            //Console.WriteLine("Refreshing...");
-            //for (int i = 0; i < GameField.Count; i++)
             if (!Form1.TimerEnabled)
                 return; //Not playing currently
             for (int i = 0; i < GameField.GetLength(0); i++)
             {
                 for (int j = 0; j < GameField.GetLength(1); j++)
                 {
-                    /*if (GameField[i].Tick > 0)
-                        GameField[i] = new SqCoord { X = GameField[i].X, Y = GameField[i].Y, Tick = GameField[i].Tick - 1 };*/
                     if (GameField[i, j].Tick > 0)
                         GameField[i, j].Tick--;
                 }
             }
-            Point nextcoord;
-            switch (MoveDirection)
-            {
-                case Direction.Down:
-                    nextcoord = new Point { X = PlayerPos.X, Y = PlayerPos.Y + 1 };
-                    break;
-                case Direction.Left:
-                    nextcoord = new Point { X = PlayerPos.X - 1, Y = PlayerPos.Y };
-                    break;
-                case Direction.Right:
-                    nextcoord = new Point { X = PlayerPos.X + 1, Y = PlayerPos.Y };
-                    break;
-                case Direction.Up:
-                    nextcoord = new Point { X = PlayerPos.X, Y = PlayerPos.Y - 1 };
-                    break;
-                default:
-                    nextcoord = PlayerPos;
-                    break;
-            }
-            //if (Game.GetCoord(nextcoord).Tick != 0)
+            Point nextcoord = MovePlayer(Player, MoveDirection);
+            Network.SyncUpdate(NetUpdateType.Move);
             if (Game.GameField[nextcoord.X, nextcoord.Y].Tick != 0 && Game.GameField[nextcoord.X, nextcoord.Y].Type != SquareType.Point)
             {
                 Lives--;
@@ -255,27 +236,13 @@ namespace SnakeGame
             }
             else
             {
-                /*for (int i = 0; i < GameField.GetLength(0); i++)
-                {
-                    for (int j = 0; j < GameField.GetLength(1); j++)
-                    {
-                        if (i == nextcoord.X && j == nextcoord.Y)
-                        {*/
                 if (GameField[nextcoord.X, nextcoord.Y].Type == SquareType.Point)
                 {
                     Score += 1000;
                     Game.AddPoint();
                 }
-                GameField[nextcoord.X, nextcoord.Y].Tick = Length;
-                GameField[nextcoord.X, nextcoord.Y].Type = SquareType.Player;
-                PlayerPos = new Point { X = nextcoord.X, Y = nextcoord.Y };
-                /*if (Score > 0)
-                    Score--;*/
                 if (Score > 0)
                     Score -= new Random().Next(1, 20);
-/*                        }
-                    }
-                }*/
                 GameRenderer.Render();
             }
         }
@@ -305,6 +272,33 @@ namespace SnakeGame
             //MessageBox.Show("Game over!");
             MSGBox.ShowMSGBox("Game over!", "", MSGBoxType.Text);
             Game.Paused = true;
+        }
+
+        public static Point MovePlayer(Player player, Direction direction)
+        {
+            Point nextcoord;
+            switch (direction)
+            {
+                case Direction.Down:
+                    nextcoord = new Point { X = player.Position.X, Y = player.Position.Y + 1 };
+                    break;
+                case Direction.Left:
+                    nextcoord = new Point { X = player.Position.X - 1, Y = player.Position.Y };
+                    break;
+                case Direction.Right:
+                    nextcoord = new Point { X = player.Position.X + 1, Y = player.Position.Y };
+                    break;
+                case Direction.Up:
+                    nextcoord = new Point { X = player.Position.X, Y = player.Position.Y - 1 };
+                    break;
+                default:
+                    nextcoord = player.Position;
+                    break;
+            }
+            GameField[nextcoord.X, nextcoord.Y].Tick = Length;
+            GameField[nextcoord.X, nextcoord.Y].Type = SquareType.Player;
+            player.Position = new Point { X = nextcoord.X, Y = nextcoord.Y };
+            return nextcoord;
         }
     }
     public enum GameStartMode

@@ -34,7 +34,7 @@ else
 	}
 	else
 	{
-		if($_POST['name']=="" || $_POST['maxplayers']=="" || $_POST['client']=="" || $_POST['ip'])
+		if($_POST['name']=="" || $_POST['maxplayers']=="" || $_POST['client']=="" || $_POST['ip']=="")
 			die("A field is or more fields are empty!");
 		mysqli_query($conn, "INSERT INTO games
 		(

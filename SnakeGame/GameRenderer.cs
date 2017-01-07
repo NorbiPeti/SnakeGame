@@ -36,7 +36,7 @@ namespace SnakeGame
                         RenderSquare(new Point { X = i, Y = j }, Color.Red);
                     else if (Game.GameField[i, j].Type == SquareType.Player)
                         if (Network.ConnectedMatch == null)
-                            RenderSquare(new Point { X = i, Y = j }, Color.Green);
+                            RenderSquare(new Point { X = i, Y = j }, Color.LimeGreen);
                         else
                             RenderSquare(new Point { X = i, Y = j }, Network.ConnectedMatch.GetPlayerByID(Game.GameField[i, j].PlayerID).Color);
                     else if (Game.GameField[i, j].Type == SquareType.Point)

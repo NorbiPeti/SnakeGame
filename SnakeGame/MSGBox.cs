@@ -97,23 +97,26 @@ namespace SnakeGame
                 case MSGBoxType.Text:
                     OnCloseEvent += delegate
                     {
-                        CloseMSGBox();
+                        Shown = false;
                         if (doneevent != null)
                             doneevent(btn, "");
+                        CloseMSGBox();
                     };
                     break;
                 case MSGBoxType.SizeInput:
                     OnCloseEvent += delegate
                     {
-                        CloseMSGBox();
+                        Shown = false;
                         if (doneevent != null)
                             //doneevent(btn, (input == null ? "" : input.Text));
                             doneevent(btn, slidervalue.ToString());
+                        CloseMSGBox();
                     };
                     break;
                 case MSGBoxType.MultipleInput:
                     OnCloseEvent += delegate
                     {
+                        Shown = false;
                         if (doneevent != null)
                         {
                             string str = "";
@@ -133,6 +136,7 @@ namespace SnakeGame
                 case MSGBoxType.List:
                     OnCloseEvent += delegate
                     {
+                        Shown = false;
                         if (doneevent != null)
                         {
                             int index = -1;
@@ -170,12 +174,12 @@ namespace SnakeGame
             Game.DialogPanel.Visible = false;
             Game.DialogPanel.Controls.Clear();
             OnCloseEvent = null;
-            Game.Paused = pause;
+            //Game.Paused = pause;
             //Form1.Instance.Activate();
             //GameRenderer.Panel.Select();
             //Form1.Instance.Select();
             Form1.Instance.Focus();
-            Shown = false;
+            //Shown = false;
         }
     }
     public enum MSGBoxType

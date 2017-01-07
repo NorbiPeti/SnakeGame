@@ -88,7 +88,7 @@ namespace SnakeGame
             GameRenderer.Render();
         }
 
-        private static bool playerpaused = false;
+        //private static bool playerpaused = false;
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             //if (e.KeyCode == Keys.Down && WPFInput.Keyboard.IsKeyDown(WPFInput.Key.Down))
@@ -108,10 +108,10 @@ namespace SnakeGame
             else if (e.KeyCode == Keys.P || e.KeyCode == Keys.Pause)
             {
                 Game.Paused = !Game.Paused;
-                if (Game.Paused)
+                /*if (Game.Paused)
                     playerpaused = true;
                 else
-                    playerpaused = false;
+                    playerpaused = false;*/
             }
             else
                 return;
@@ -150,12 +150,19 @@ namespace SnakeGame
 
         private void toolStripTextBox1_TextChanged(object sender, EventArgs e)
         {
-            Game.UserName = toolStripTextBox1.Text;
+            Game.Player.Name = toolStripTextBox1.Text;
         }
 
+        //private static Timer resizetimer = new Timer();
         private void Form1_Resize(object sender, EventArgs e)
         {
-            
+            GameRenderer.Render();
+        }
+
+        private void Form1_ResizeEnd(object sender, EventArgs e)
+        {
+            Graphics gr = panel1.CreateGraphics();
+            gr.FillRectangle(new SolidBrush(Color.Black), new Rectangle(new Point(0, 0), panel1.Size));
             GameRenderer.Render();
         }
     }
