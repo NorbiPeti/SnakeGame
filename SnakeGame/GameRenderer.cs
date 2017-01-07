@@ -19,16 +19,21 @@ namespace SnakeGame
                 for (int j = 0; j < Game.GameField.GetLength(1); j++)
                 {
                     //if (coord.Tick == -1)
-                    if (Game.GameField[i, j] == -1)
-                        RenderSquare(new SqCoord { X = i, Y = j }, Color.Red);
-                    else if (Game.GameField[i, j] == 0)
-                        RenderSquare(new SqCoord { X = i, Y = j }, Color.Black);
+                    //if (Game.GameField[i, j].Tick == -1)
+                    if (Game.GameField[i, j].Tick == 0)
+                        RenderSquare(new Point { X = i, Y = j }, Color.Black);
+                    else if (Game.GameField[i, j].Type == SquareType.Wall)
+                        RenderSquare(new Point { X = i, Y = j }, Color.Red);
+                    else if (Game.GameField[i, j].Type == SquareType.Player)
+                        RenderSquare(new Point { X = i, Y = j }, Color.Green);
+                    else if (Game.GameField[i, j].Type == SquareType.Point)
+                        RenderSquare(new Point { X = i, Y = j }, Color.Blue);
                     else
-                        RenderSquare(new SqCoord { X = i, Y = j }, Color.Green);
+                        RenderSquare(new Point { X = i, Y = j }, Color.Gray);
                 }
             }
         }
-        private static void RenderSquare(SqCoord coord, Color color)
+        private static void RenderSquare(Point coord, Color color)
         {
             Graphics gr = Panel.CreateGraphics();
             gr.FillRectangle(new SolidBrush(color), SquareCoord.SqCoordToRect(coord, Panel.Size));

@@ -13,7 +13,9 @@ namespace SnakeGame
     public partial class Form1 : Form
     {
         private static Timer Timer;
+        private static Timer SpeedTimer;
         private static bool timerenabled = false;
+        public static Form1 Instance;
         public static bool TimerEnabled
         {
             get
@@ -23,7 +25,10 @@ namespace SnakeGame
             set
             {
                 if (value && !timerenabled) //Only start if not running already
+                {
                     Timer.Start();
+                    SpeedTimer.Start();
+                }
                 timerenabled = value;
             }
         }
@@ -39,6 +44,10 @@ namespace SnakeGame
             menuStrip1.Renderer = new ToolStripProfessionalRenderer(new MenuColorTable());
             menuStrip1.ForeColor = Color.White;
             GameRenderer.Panel = panel1;
+            Game.ScoreLabel = scoreLabel;
+            Game.LivesLabel = livesLabel;
+            Game.DialogPanel = DialogPanel;
+            Instance = this;
             Timer = new Timer();
             Timer.Interval = Game.UpdateTime;
             Timer.Tick += delegate
@@ -50,6 +59,16 @@ namespace SnakeGame
                     Timer.Start();
             };
             //Timer.Start();
+            SpeedTimer = new Timer();
+            SpeedTimer.Interval = 10000;
+            SpeedTimer.Tick += delegate
+            {
+                if (Game.UpdateTime - 100 > 0)
+                    Game.UpdateTime -= 100;
+                Game.Length++;
+                if (!TimerEnabled)
+                    SpeedTimer.Stop();
+            };
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -72,11 +91,30 @@ namespace SnakeGame
                 Game.MoveDirection = Direction.Left;
             else if (e.KeyCode == Keys.Right)
                 Game.MoveDirection = Direction.Right;
+            else if (e.KeyCode == Keys.Enter)
+            {
+                MSGBox.CloseMSGBox();
+            }
+            Game.Refresh();
         }
 
         private void newSingleplayerGameToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Game.Start(GameStartMode.SinglePlayer);
+        }
+
+        private bool formdeactivated = false;
+        private void Form1_Activated(object sender, EventArgs e)
+        {
+            if (formdeactivated)
+                Game.Paused = false;
+            formdeactivated = false;
+        }
+
+        private void Form1_Deactivate(object sender, EventArgs e)
+        {
+            formdeactivated = !Game.Paused;
+            Game.Paused = true;
         }
     }
 }

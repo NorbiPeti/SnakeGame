@@ -53,6 +53,8 @@
     <Compile Include="Game.cs" />
     <Compile Include="GameRenderer.cs" />
     <Compile Include="MenuColorTable.cs" />
+    <Compile Include="MSGBox.cs" />
+    <Compile Include="Network.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SquareCoord.cs" />
